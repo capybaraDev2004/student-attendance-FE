@@ -1,0 +1,210 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model stages {
+  id             Int       @id @default(autoincrement())
+  name           String
+  description    String?
+  duration_weeks Int?
+  lessons        lessons[]
+
+  @@map("stages")
+}
+
+model vocabulary_categories {
+  id           Int          @id @default(autoincrement())
+  name_vi      String?
+  name_en      String?
+  vocabularies vocabulary[]
+
+  @@map("vocabulary_categories")
+}
+
+model sentence_categories {
+  id        Int         @id @default(autoincrement())
+  name_vi   String?
+  name_en   String?
+  sentences sentences[]
+
+  @@map("sentence_categories")
+}
+
+model sentences {
+  id                 Int                 @id @default(autoincrement())
+  chinese_simplified String?
+  pinyin             String?
+  vietnamese         String?
+  lesson_id          Int
+  category_id        Int
+  category           sentence_categories @relation(fields: [category_id], references: [id])
+  lesson             lessons             @relation(fields: [lesson_id], references: [lesson_id])
+
+  @@map("sentences")
+}
+
+model users {
+  user_id       Int                 @id @default(autoincrement())
+  username      String              @unique
+  email         String              @unique
+  password_hash String
+  created_at    DateTime            @default(now())
+  role          Role                @default(customer)
+  email_confirmed            Boolean        @default(false)
+  verification_code          String?
+  verification_code_expires_at DateTime?
+  reset_code                 String?
+  reset_code_expires_at      DateTime?
+  account_status             AccountStatus  @default(normal)
+  account_type               AccountType    @default(local)
+  must_set_password          Boolean        @default(false)
+  image_url                  String?
+  address                    String?
+  province                   String?
+  region                     Region?
+  files                      user_files[]
+  progresses    user_progress[]
+  reviews       user_vocab_review[]
+  daily_tasks   daily_tasks[]
+}
+
+model lessons {
+  lesson_id        Int             @id @default(autoincrement())
+  title            String
+  created_at       DateTime        @default(now())
+  duration_minutes Int?
+  order_index      Int?
+  stage_id         Int?
+  stage            stages?         @relation(fields: [stage_id], references: [id])
+  quizzes          quizzes[]
+  sentences        sentences[]
+  progresses       user_progress[]
+  vocabularies     vocabulary[]
+}
+
+model vocabulary {
+  vocab_id       Int                    @id @default(autoincrement())
+  chinese_word   String
+  pinyin         String
+  meaning_vn     String
+  audio_url      String?
+  lesson_id      Int
+  category_id    Int?
+  part_of_speech String?
+  reviews        user_vocab_review[]
+  category       vocabulary_categories? @relation(fields: [category_id], references: [id])
+  lesson         lessons                @relation(fields: [lesson_id], references: [lesson_id])
+}
+
+model quizzes {
+  quiz_id       Int            @id @default(autoincrement())
+  question_text String
+  question_type String
+  lesson_id     Int
+  options       quiz_options[]
+  lesson        lessons        @relation(fields: [lesson_id], references: [lesson_id])
+}
+
+model quiz_options {
+  option_id   Int     @id @default(autoincrement())
+  option_text String
+  is_correct  Boolean @default(false)
+  quiz_id     Int
+  quiz        quizzes @relation(fields: [quiz_id], references: [quiz_id])
+}
+
+model user_progress {
+  progress_id   Int       @id @default(autoincrement())
+  status        String
+  score         Int?
+  last_reviewed DateTime?
+  user_id       Int
+  lesson_id     Int
+  lesson        lessons   @relation(fields: [lesson_id], references: [lesson_id])
+  user          users     @relation(fields: [user_id], references: [user_id])
+
+  @@unique([user_id, lesson_id])
+}
+
+model user_vocab_review {
+  review_id        Int        @id @default(autoincrement())
+  review_count     Int        @default(0)
+  last_reviewed    DateTime?
+  next_review_date DateTime?
+  user_id          Int
+  vocab_id         Int
+  user             users      @relation(fields: [user_id], references: [user_id])
+  vocab            vocabulary @relation(fields: [vocab_id], references: [vocab_id])
+
+  @@unique([user_id, vocab_id])
+}
+
+enum Role {
+  admin
+  customer
+}
+
+enum AccountStatus {
+  normal
+  vip
+}
+
+enum AccountType {
+  local
+  google
+}
+
+enum Region {
+  bac
+  trung
+  nam
+}
+
+enum FileType {
+  image
+  document
+}
+
+model user_files {
+  id          Int       @id @default(autoincrement())
+  user_id     Int
+  file_name   String
+  file_url    String
+  file_type   FileType
+  created_at  DateTime  @default(now())
+  user        users     @relation(fields: [user_id], references: [user_id])
+}
+
+model flashcards {
+  id          Int       @id @default(autoincrement())
+  image_url   String?
+  answer      String    // Câu trả lời
+  status      String    @default("active") // Trạng thái: active, inactive
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  @@map("flashcards")
+}
+
+model daily_tasks {
+  id                Int       @id @default(autoincrement())
+  user_id           Int
+  vocabulary_count  Int       @default(0)
+  sentence_count    Int       @default(0)
+  contest_completed Boolean   @default(false)
+  points_awarded    Int       @default(10)
+  points_given      Boolean   @default(false)
+  date              DateTime  @default(dbgenerated("CURRENT_DATE")) @db.Date
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  user              users     @relation(fields: [user_id], references: [user_id])
+
+  @@unique([user_id, date])
+  @@map("daily_tasks")
+}

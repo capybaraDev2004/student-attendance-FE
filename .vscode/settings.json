@@ -1,0 +1,18 @@
+{
+  // Ẩn cảnh báo unknownAtRules cho TailwindCSS (@apply, @theme, ...)
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore",
+  "less.lint.unknownAtRules": "ignore",
+  // Bật Tailwind CSS IntelliSense trong thư mục src
+  "tailwindCSS.includeLanguages": {
+    "plaintext": "html"
+  },
+  "tailwindCSS.experimental.classRegex": [
+    "tw`([^`]*)",
+    "tw\(\s*`([^`]*)`\s*\)",
+    "className=\"([^\"]*)\"",
+    "class=\"([^\"]*)\""
+  ]
+}
+
+
