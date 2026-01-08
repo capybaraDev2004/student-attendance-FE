@@ -26,8 +26,6 @@ export default function NewsManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
   // Lấy dữ liệu
   useEffect(() => {
     if (status === "loading") {

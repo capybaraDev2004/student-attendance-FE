@@ -5,7 +5,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
 
 type Message = {
   id: string;
@@ -14,7 +13,6 @@ type Message = {
 };
 
 export default function ChatbotWidget() {
-  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);

@@ -114,9 +114,10 @@ export default function WritingContent() {
       } else {
         setError("Không nhận dạng được chữ Hán. Vui lòng vẽ lại rõ ràng hơn.");
       }
-    } catch (err: any) {
-      console.error("Recognition error:", err);
-      setError(err.message || "Có lỗi xảy ra khi nhận dạng. Vui lòng thử lại.");
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("Recognition error:", error);
+      setError(error.message || "Có lỗi xảy ra khi nhận dạng. Vui lòng thử lại.");
     } finally {
       setIsRecognizing(false);
     }
@@ -144,9 +145,10 @@ export default function WritingContent() {
       const data = await response.json();
       setPinyin(data.pinyin && data.pinyin !== "-" ? data.pinyin : null);
       setMeaning(data.meaning && data.meaning !== "-" ? data.meaning : null);
-    } catch (err: any) {
-      console.error("Character info error:", err);
-      setError(err.message || "Có lỗi xảy ra khi lấy thông tin.");
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("Character info error:", error);
+      setError(error.message || "Có lỗi xảy ra khi lấy thông tin.");
     } finally {
       setIsLoadingInfo(false);
     }

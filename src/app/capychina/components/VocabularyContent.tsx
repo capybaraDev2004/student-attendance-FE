@@ -252,11 +252,12 @@ export default function VocabularyContent({
           console.error("[Component] ❌ Full error response:", data);
           setSelectedWords([]);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const err = error as Error;
         console.error("[Component] ❌ Exception khi fetch vocabulary:", {
-          message: error?.message,
-          name: error?.name,
-          stack: error?.stack?.substring(0, 500),
+          message: err?.message,
+          name: err?.name,
+          stack: err?.stack?.substring(0, 500),
           error,
         });
         setSelectedWords([]);
@@ -505,7 +506,6 @@ export default function VocabularyContent({
                           return false;
                         })
                         .map((page, index, array) => {
-                          const totalPages = Math.ceil(selectedWords.length / itemsPerPage);
                           const prevPage = array[index - 1];
                           const showEllipsis = prevPage && page - prevPage > 1;
 

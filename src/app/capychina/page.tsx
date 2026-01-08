@@ -7,8 +7,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { apiFetch } from "@/lib/api";
 import {
-  progressTips,
-  quests,
   sidebarItems,
 } from "./data";
 import ContestContent from "./components/ContestContent";
@@ -36,7 +34,7 @@ const ACTIVE_SECTION_STORAGE_KEY = "capychina-active-section";
 export default function CapyChinaEntryPage() {
   const { data: session } = useSession();
   const router = useRouter();
-  const accessToken = (session as any)?.accessToken ?? null;
+  const accessToken = session?.accessToken ?? null;
   const [activeKey, setActiveKey] = useState(sidebarItems[0].key);
   const [showLoginModal, setShowLoginModal] = useState(false);
   // Khởi tạo với giá trị mặc định để tránh hydration mismatch
@@ -140,8 +138,14 @@ export default function CapyChinaEntryPage() {
     }
     
     // Lắng nghe event để cập nhật realtime
-    const handleProgressUpdate = (e: CustomEvent) => {
-      const updates = (e as any).detail;
+    const handleProgressUpdate = (e: CustomEvent<{
+      vocabulary_count?: number;
+      sentence_count?: number;
+      contest_completed?: boolean;
+      type?: string;
+      value?: number;
+    }>) => {
+      const updates = e.detail;
       if (updates) {
         // Optimistic update ngay lập tức (không chờ server)
         updateDailyTaskOptimistic(updates);
@@ -430,10 +434,6 @@ export default function CapyChinaEntryPage() {
       // Không throw error để không làm gián đoạn UI
     }
   }, []);
-  const activeSidebarItem = useMemo(
-    () => sidebarItems.find((item) => item.key === activeKey),
-    [activeKey]
-  );
 
   const renderContent = () => {
     // Kiểm tra nếu user cố truy cập vào chức năng bị khóa

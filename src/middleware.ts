@@ -13,7 +13,7 @@ export default withAuth(
 		}
 
 		// Kiểm tra nếu token có lỗi (ví dụ: lỗi đăng nhập Google) => redirect về login
-		if ((token as any)?.error) {
+		if (token?.error) {
 			return NextResponse.redirect(new URL("/login?error=auth_error", req.url));
 		}
 

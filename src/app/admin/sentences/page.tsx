@@ -245,7 +245,7 @@ export default function SentencesManagement() {
               <span className="text-sm font-medium text-gray-700">Tiêu chí đang áp dụng:</span>
               {searchTerm && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 text-amber-800 rounded-full text-sm font-medium">
-                  <span>Từ khóa: "{searchTerm}"</span>
+                  <span>Từ khóa: &quot;{searchTerm}&quot;</span>
                   <button
                     onClick={() => setSearchTerm('')}
                     className="hover:bg-amber-200 rounded-full p-0.5 transition-colors"
