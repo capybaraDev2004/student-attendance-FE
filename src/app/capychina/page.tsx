@@ -16,6 +16,7 @@ import SentenceContent from "./components/SentenceContent";
 import SpeakingContent from "./components/SpeakingContent";
 import VocabularyContent from "./components/VocabularyContent";
 import WritingContent from "./components/WritingContent";
+import LoginRequiredModal from "@/components/auth/LoginRequiredModal";
 
 const tipThemes = [
   { wrapper: "bg-emerald-50/80 border-emerald-100", value: "text-emerald-900", subtitle: "text-emerald-700" },
@@ -32,11 +33,12 @@ const questThemes = [
 const ACTIVE_SECTION_STORAGE_KEY = "capychina-active-section";
 
 export default function CapyChinaEntryPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const accessToken = session?.accessToken ?? null;
   const [activeKey, setActiveKey] = useState(sidebarItems[0].key);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
   // Khởi tạo với giá trị mặc định để tránh hydration mismatch
   const [progressCards, setProgressCards] = useState(() => [
     { title: "Điểm chuyên cần", value: "0 ngày", subtitle: "Làm 1 bài hôm nay để mở streak" },
@@ -402,6 +404,15 @@ export default function CapyChinaEntryPage() {
     }
   }, [session?.error]);
 
+  // Kiểm tra đăng nhập khi component mount
+  useEffect(() => {
+    if (status === "authenticated") {
+      setShowLoginRequiredModal(false);
+    } else if (status === "unauthenticated") {
+      setShowLoginRequiredModal(true);
+    }
+  }, [status]);
+
   const speakPinyin = useCallback(async (text: string) => {
     if (typeof window === "undefined" || !text) return;
     
@@ -510,6 +521,43 @@ export default function CapyChinaEntryPage() {
     router.push("/login");
   };
 
+  // Nếu chưa đăng nhập, chỉ hiển thị modal, không hiển thị nội dung
+  if (status === "unauthenticated") {
+    return (
+      <>
+        <main className="min-h-screen w-full bg-white px-4 py-6 text-left lg:px-12">
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Đang kiểm tra đăng nhập...</p>
+            </div>
+          </div>
+        </main>
+        <LoginRequiredModal 
+          isOpen={showLoginRequiredModal} 
+          onClose={() => {
+            setShowLoginRequiredModal(false);
+            router.push("/");
+          }} 
+        />
+      </>
+    );
+  }
+
+  // Nếu đang loading, hiển thị loading
+  if (status === "loading") {
+    return (
+      <main className="min-h-screen w-full bg-white px-4 py-6 text-left lg:px-12">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Đang tải...</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen w-full bg-white px-4 py-6 text-left lg:px-12">
       {/* Popup thông báo hết hạn đăng nhập */}
@@ -548,6 +596,15 @@ export default function CapyChinaEntryPage() {
           </div>
         </div>
       )}
+
+      {/* Modal yêu cầu đăng nhập khi chưa đăng nhập */}
+      <LoginRequiredModal 
+        isOpen={showLoginRequiredModal} 
+        onClose={() => {
+          setShowLoginRequiredModal(false);
+          router.push("/");
+        }} 
+      />
 
       <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-8">
         {/* Top bar */}

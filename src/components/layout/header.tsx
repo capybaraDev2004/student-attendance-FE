@@ -1,19 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
+import LoginRequiredModal from "../auth/LoginRequiredModal";
 
 export default function Header() {
 	const pathname = usePathname();
+	const router = useRouter();
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 	const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+	const [showLoginModal, setShowLoginModal] = useState(false);
     const { data: session, status } = useSession();
     const [mounted, setMounted] = useState(false);
     useEffect(() => setMounted(true), []);
     const isAdmin = mounted && session?.user?.role === "admin";
     const isLoggedIn = mounted && !!session?.user; // Cho phép hiển thị Dashboard cho mọi người dùng đã đăng nhập
+
+	const handleStartLearningClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+		if (!isLoggedIn) {
+			e.preventDefault();
+			setShowLoginModal(true);
+		}
+	};
 
 	return (
 		<>
@@ -55,6 +65,7 @@ export default function Header() {
 						<Link 
 							className={`nav-link ${pathname?.startsWith("/capychina") ? "active" : ""}`} 
 							href="/capychina"
+							onClick={handleStartLearningClick}
 						>
 							Bắt đầu học
 						</Link>
@@ -239,7 +250,15 @@ export default function Header() {
 						<Link 
 							href="/capychina" 
 							className={`mobile-menu-item ${pathname?.startsWith("/capychina") ? "active" : ""}`}
-							onClick={() => setIsMobileMenuOpen(false)}
+							onClick={(e) => {
+								if (!isLoggedIn) {
+									e.preventDefault();
+									setIsMobileMenuOpen(false);
+									setShowLoginModal(true);
+								} else {
+									setIsMobileMenuOpen(false);
+								}
+							}}
 						>
 							<svg className="mobile-menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-5-8V6a2 2 0 012-2h2a2 2 0 012 2v2M7 7h10a2 2 0 012 2v8a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2z" />
@@ -369,6 +388,12 @@ export default function Header() {
 					</div>
 				</div>
 			)}
+
+			{/* Modal yêu cầu đăng nhập */}
+			<LoginRequiredModal 
+				isOpen={showLoginModal} 
+				onClose={() => setShowLoginModal(false)} 
+			/>
 		</>
 	);
 }

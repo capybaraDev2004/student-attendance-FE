@@ -10,10 +10,13 @@
 NEXTAUTH_URL=https://your-app.vercel.app
 NEXTAUTH_SECRET=<generate-random-32-chars-secret>
 
-# Backend API URL
-NEXT_PUBLIC_API_URL=https://your-backend-api.railway.app
-# Hoặc dùng alias này
-NEST_API_URL=https://your-backend-api.railway.app
+# Backend API URL (BẮT BUỘC cho production)
+NEXT_PUBLIC_API_URL=https://student-attendance-be.onrender.com
+# Hoặc dùng alias này (một số file dùng NEST_API_URL)
+NEST_API_URL=https://student-attendance-be.onrender.com
+
+# Lưu ý: NEXT_PUBLIC_API_URL sẽ được expose ra client-side
+# Đảm bảo backend có CORS được cấu hình đúng
 
 # Database Connection
 DATABASE_URL=postgresql://user:password@host:port/database?schema=public
@@ -127,10 +130,23 @@ openssl rand -base64 64
 
 ## 🔄 Cập nhật Environment Variables
 
-### Trong Vercel:
-1. Vào Project Settings → Environment Variables
-2. Thêm/Sửa/Xóa variables
-3. Redeploy để áp dụng thay đổi
+### Trong Vercel (Frontend - Production):
+1. Vào Vercel Dashboard → Project của bạn
+2. Vào **Settings** → **Environment Variables**
+3. Thêm/Sửa các biến sau cho **Production** environment:
+   - `NEXT_PUBLIC_API_URL` = `https://student-attendance-be.onrender.com`
+   - `NEST_API_URL` = `https://student-attendance-be.onrender.com` (nếu code dùng)
+   - `NEXTAUTH_URL` = URL của Vercel app (ví dụ: `https://your-app.vercel.app`)
+   - `NEXTAUTH_SECRET` = (tạo mới hoặc dùng secret từ .env local)
+4. **Quan trọng:** Chọn đúng environment (Production, Preview, Development)
+5. **Save** và **Redeploy** để áp dụng thay đổi
+
+### Trong Render (Backend - Production):
+1. Vào Render Dashboard → Web Service của bạn
+2. Vào tab **Environment**
+3. Thêm/Sửa `FRONTEND_URL` để cho phép CORS:
+   - `FRONTEND_URL` = `https://your-vercel-app.vercel.app,https://your-vercel-app-git-main.vercel.app`
+4. **Save** - Render sẽ tự động restart
 
 ### Trong Railway:
 1. Vào Project → Variables
