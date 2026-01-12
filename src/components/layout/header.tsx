@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import LoginRequiredModal from "../auth/LoginRequiredModal";
+import VipPackageModal from "../payment/VipPackageModal";
 
 export default function Header() {
 	const pathname = usePathname();
@@ -12,6 +13,7 @@ export default function Header() {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 	const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
 	const [showLoginModal, setShowLoginModal] = useState(false);
+	const [showVipModal, setShowVipModal] = useState(false);
     const { data: session, status } = useSession();
     const [mounted, setMounted] = useState(false);
     useEffect(() => setMounted(true), []);
@@ -131,6 +133,23 @@ export default function Header() {
                                         <div 
                                             className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-2 z-50"
                                         >
+                                            {session.user.account_status !== 'vip' && (
+                                                <button
+                                                    onClick={() => {
+                                                        setIsUserDropdownOpen(false);
+                                                        setShowVipModal(true);
+                                                    }}
+                                                    className="w-full text-left px-4 py-2 text-sm text-amber-600 hover:bg-amber-50 transition-colors duration-200 font-semibold"
+                                                >
+                                                    <div className="flex items-center space-x-2">
+                                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M12 2l2.39 5.3L20 7.58l-4 3.89.95 5.66L12 14.77l-4.95 2.36L8 11.47 4 7.58l5.61-.28L12 2z"/>
+                                                        </svg>
+                                                        <span>Mua VIP Ngay</span>
+                                                    </div>
+                                                </button>
+                                            )}
+                                            
                                             <Link 
                                                 href="/profile" 
                                                 className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors duration-200"
@@ -337,6 +356,23 @@ export default function Header() {
 									{/* Mobile dropdown menu */}
 									{isUserDropdownOpen && (
 										<div className="mobile-dropdown-section">
+											{session.user.account_status !== 'vip' && (
+												<button
+													onClick={() => {
+														setIsUserDropdownOpen(false);
+														setIsMobileMenuOpen(false);
+														setShowVipModal(true);
+													}}
+													className="mobile-dropdown-item"
+													style={{ color: '#d97706', fontWeight: '600' }}
+												>
+													<svg className="mobile-dropdown-icon" fill="currentColor" viewBox="0 0 24 24">
+														<path d="M12 2l2.39 5.3L20 7.58l-4 3.89.95 5.66L12 14.77l-4.95 2.36L8 11.47 4 7.58l5.61-.28L12 2z"/>
+													</svg>
+													<span className="mobile-dropdown-text">Mua VIP Ngay</span>
+												</button>
+											)}
+											
 											<Link 
 												href="/profile" 
 												className="mobile-dropdown-item"
@@ -394,6 +430,14 @@ export default function Header() {
 				isOpen={showLoginModal} 
 				onClose={() => setShowLoginModal(false)} 
 			/>
+
+			{/* Modal chọn gói VIP */}
+			{isLoggedIn && (
+				<VipPackageModal 
+					isOpen={showVipModal} 
+					onClose={() => setShowVipModal(false)} 
+				/>
+			)}
 		</>
 	);
 }

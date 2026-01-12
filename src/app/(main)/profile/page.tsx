@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { apiFetch } from "@/lib/api";
+import VipPackageModal from "@/components/payment/VipPackageModal";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
@@ -82,6 +83,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [showVipModal, setShowVipModal] = useState(false);
 
   useEffect(() => {
     if (status !== "authenticated" || !accessToken) {
@@ -335,10 +337,7 @@ export default function ProfilePage() {
                   </div>
                   <button
                     className="px-6 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 text-white rounded-lg font-semibold hover:from-yellow-600 hover:to-amber-600 transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
-                    onClick={() => {
-                      // TODO: Xử lý nâng cấp VIP
-                      alert("Tính năng nâng cấp VIP đang được phát triển");
-                    }}
+                    onClick={() => setShowVipModal(true)}
                   >
                     <svg
                       className="w-5 h-5"
@@ -380,6 +379,12 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Modal chọn gói VIP */}
+      <VipPackageModal 
+        isOpen={showVipModal} 
+        onClose={() => setShowVipModal(false)} 
+      />
     </div>
   );
 }

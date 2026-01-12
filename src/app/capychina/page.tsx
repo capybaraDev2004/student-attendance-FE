@@ -17,6 +17,7 @@ import SpeakingContent from "./components/SpeakingContent";
 import VocabularyContent from "./components/VocabularyContent";
 import WritingContent from "./components/WritingContent";
 import LoginRequiredModal from "@/components/auth/LoginRequiredModal";
+import VipPackageModal from "@/components/payment/VipPackageModal";
 
 const tipThemes = [
   { wrapper: "bg-emerald-50/80 border-emerald-100", value: "text-emerald-900", subtitle: "text-emerald-700" },
@@ -39,6 +40,7 @@ export default function CapyChinaEntryPage() {
   const [activeKey, setActiveKey] = useState(sidebarItems[0].key);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
+  const [showVipModal, setShowVipModal] = useState(false);
   // Khởi tạo với giá trị mặc định để tránh hydration mismatch
   const [progressCards, setProgressCards] = useState(() => [
     { title: "Điểm chuyên cần", value: "0 ngày", subtitle: "Làm 1 bài hôm nay để mở streak" },
@@ -630,10 +632,7 @@ export default function CapyChinaEntryPage() {
                 {!isVip && session?.user && (
                   <button
                     className="self-start px-3 py-1.5 bg-gradient-to-r from-yellow-400 to-amber-500 text-white rounded-lg font-semibold hover:from-yellow-500 hover:to-amber-600 transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-1.5 text-xs sm:text-sm"
-                    onClick={() => {
-                      // TODO: Xử lý nâng cấp VIP
-                      alert("Tính năng nâng cấp VIP đang được phát triển");
-                    }}
+                    onClick={() => setShowVipModal(true)}
                   >
                     <svg
                       className="w-3.5 h-3.5"
@@ -928,6 +927,23 @@ export default function CapyChinaEntryPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal yêu cầu đăng nhập */}
+      <LoginRequiredModal 
+        isOpen={showLoginRequiredModal} 
+        onClose={() => {
+          setShowLoginRequiredModal(false);
+          router.push("/");
+        }} 
+      />
+
+      {/* Modal chọn gói VIP */}
+      {session?.user && (
+        <VipPackageModal 
+          isOpen={showVipModal} 
+          onClose={() => setShowVipModal(false)} 
+        />
+      )}
     </main>
   );
 }

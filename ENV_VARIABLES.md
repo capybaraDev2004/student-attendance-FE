@@ -11,12 +11,16 @@ NEXTAUTH_URL=https://your-app.vercel.app
 NEXTAUTH_SECRET=<generate-random-32-chars-secret>
 
 # Backend API URL (BẮT BUỘC cho production)
+# Nên để CẢ 2 biến để đảm bảo tương thích với tất cả các file
 NEXT_PUBLIC_API_URL=https://student-attendance-be.onrender.com
-# Hoặc dùng alias này (một số file dùng NEST_API_URL)
 NEST_API_URL=https://student-attendance-be.onrender.com
 
-# Lưu ý: NEXT_PUBLIC_API_URL sẽ được expose ra client-side
-# Đảm bảo backend có CORS được cấu hình đúng
+# Giải thích:
+# - NEXT_PUBLIC_API_URL: Được dùng bởi hầu hết các file (lib/api.ts, components, v.v.)
+# - NEST_API_URL: Được dùng bởi một số auth routes với fallback pattern: NEST_API_URL || NEXT_PUBLIC_API_URL
+# - Cả 2 đều nên set cùng một giá trị để đảm bảo consistency
+# - NEXT_PUBLIC_API_URL sẽ được expose ra client-side (cần prefix NEXT_PUBLIC_)
+# - Đảm bảo backend có CORS được cấu hình đúng trong Render
 
 # Database Connection
 DATABASE_URL=postgresql://user:password@host:port/database?schema=public
