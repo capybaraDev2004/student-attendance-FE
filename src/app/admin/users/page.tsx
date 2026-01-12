@@ -20,6 +20,8 @@ interface User {
   address: string | null;
   province: string | null;
   region: "bac" | "trung" | "nam" | null;
+  vip_package_type: "lifetime" | "one_day" | "one_week" | "one_month" | "one_year" | null;
+  vip_expires_at: string | null;
 }
 
 const FIXED_PROVINCES = [
@@ -94,6 +96,18 @@ export default function UsersManagement() {
 
 const translateAccountType = (type: User['account_type']) =>
   type === 'google' ? 'Google' : 'Local';
+
+const translateVipPackageType = (type: User['vip_package_type']) => {
+  if (!type) return '—';
+  const map: Record<User['vip_package_type'], string> = {
+    lifetime: 'Vĩnh viễn',
+    one_day: '1 Ngày',
+    one_week: '1 Tuần',
+    one_month: '1 Tháng',
+    one_year: '1 Năm',
+  };
+  return map[type] || type;
+};
 
   // Lấy danh sách người dùng
   useEffect(() => {
@@ -357,14 +371,16 @@ const translateAccountType = (type: User['account_type']) =>
               <col className="w-16" />
               <col className="w-[18%]" />
               <col className="w-[18%]" />
-              <col className="w-[10%]" />
-              <col className="w-[14%]" />
-              <col className="w-[16%]" />
-              <col className="w-[10%]" />
-              <col className="w-[10%]" />
-              <col className="w-[10%]" />
-              <col className="w-[12%]" />
-              <col className="w-28" />
+            <col className="w-[8%]" />
+            <col className="w-[12%]" />
+            <col className="w-[12%]" />
+            <col className="w-[8%]" />
+            <col className="w-[10%]" />
+            <col className="w-[8%]" />
+            <col className="w-[10%]" />
+            <col className="w-[10%]" />
+            <col className="w-[12%]" />
+            <col className="w-28" />
             </colgroup>
             <thead className="bg-gradient-to-r from-blue-600 to-indigo-700">
               <tr>
@@ -422,6 +438,22 @@ const translateAccountType = (type: User['account_type']) =>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
                     <span>Vai trò</span>
+                  </div>
+                </th>
+                <th className="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
+                  <div className="flex items-center justify-center space-x-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                    </svg>
+                    <span>Gói VIP</span>
+                  </div>
+                </th>
+                <th className="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
+                  <div className="flex items-center justify-center space-x-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>Hạn VIP</span>
                   </div>
                 </th>
                 <th className="px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
@@ -498,6 +530,27 @@ const translateAccountType = (type: User['account_type']) =>
                       <option value="admin">Quản trị viên</option>
                     </select>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    {user.vip_package_type ? (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">
+                        {translateVipPackageType(user.vip_package_type)}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {user.vip_expires_at ? (
+                      <div className="space-y-1">
+                        <div>{new Date(user.vip_expires_at).toLocaleDateString('vi-VN')}</div>
+                        <div className="text-xs text-gray-500">
+                          {new Date(user.vip_expires_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {new Date(user.created_at).toLocaleDateString('vi-VN')}
                   </td>
@@ -572,6 +625,8 @@ function EditUserModal({
     address: user.address ?? "",
     province: user.province ?? "",
     region: (user.region ?? "") as "" | User["region"],
+    vip_package_type: (user.vip_package_type ?? "") as "" | User["vip_package_type"],
+    vip_expires_at: toLocalInputValue(user.vip_expires_at),
   });
   const [loading, setLoading] = useState(false);
 
@@ -598,6 +653,16 @@ function EditUserModal({
       if (formData.region) {
         payload.region = formData.region;
       }
+
+      if (formData.vip_package_type) {
+        payload.vip_package_type = formData.vip_package_type;
+      } else {
+        payload.vip_package_type = null;
+      }
+
+      payload.vip_expires_at = formData.vip_expires_at
+        ? toIsoStringFromLocal(formData.vip_expires_at)
+        : null;
 
       await apiFetch(`/admin/users/${user.user_id}`, {
         method: 'PATCH',
@@ -700,6 +765,40 @@ function EditUserModal({
                 <option value="local">Local</option>
                 <option value="google">Google</option>
               </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-600 mb-1 block">Gói VIP</label>
+              <select
+                value={formData.vip_package_type || ""}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    vip_package_type: e.target.value as User['vip_package_type'] || null,
+                  })
+                }
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition"
+              >
+                <option value="">Không có gói</option>
+                <option value="lifetime">Vĩnh viễn</option>
+                <option value="one_day">1 Ngày</option>
+                <option value="one_week">1 Tuần</option>
+                <option value="one_month">1 Tháng</option>
+                <option value="one_year">1 Năm</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-600 mb-1 block">Hạn VIP (Ngày & Giờ)</label>
+              <input
+                type="datetime-local"
+                value={formData.vip_expires_at}
+                onChange={(e) =>
+                  setFormData({ ...formData, vip_expires_at: e.target.value })
+                }
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition"
+              />
             </div>
           </div>
 
