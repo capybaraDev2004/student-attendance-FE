@@ -307,17 +307,13 @@ export default function CapyChinaEntryPage() {
     // Load ngay lập tức
     loadAttendance();
 
-    // Auto refresh mỗi 5 giây
-    const interval = setInterval(loadAttendance, 5000);
-
-    // Lắng nghe event từ ContestContent khi finish bài thi
+    // Lắng nghe event từ ContestContent khi finish bài thi để cập nhật streak
     const handleProgressUpdate = () => {
       loadAttendance();
     };
     window.addEventListener("progress-updated", handleProgressUpdate);
 
     return () => {
-      clearInterval(interval);
       window.removeEventListener("progress-updated", handleProgressUpdate);
     };
   }, [accessToken, formatDate]);

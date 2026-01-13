@@ -99,7 +99,7 @@ const translateAccountType = (type: User['account_type']) =>
 
 const translateVipPackageType = (type: User['vip_package_type']) => {
   if (!type) return '—';
-  const map: Record<User['vip_package_type'], string> = {
+  const map: Record<NonNullable<User['vip_package_type']>, string> = {
     lifetime: 'Vĩnh viễn',
     one_day: '1 Ngày',
     one_week: '1 Tuần',
@@ -842,7 +842,7 @@ function EditUserModal({
                 Miền
               </label>
               <select
-                value={formData.region}
+                value={formData.region ?? ""}
                 onChange={(e) =>
                   setFormData({
                     ...formData,

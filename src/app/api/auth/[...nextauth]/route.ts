@@ -109,6 +109,11 @@ async function refreshAccessToken(token: ExtendedToken): Promise<ExtendedToken> 
 			role: data.user.role,
 			userId: data.user.user_id,
 			mustSetPassword: data.user.must_set_password,
+			imageUrl: data.user.image_url ?? null,
+			address: data.user.address ?? null,
+			province: data.user.province ?? null,
+			region: data.user.region ?? null,
+			accountStatus: data.user.account_status,
 			error: undefined,
 		};
 	} catch (error) {

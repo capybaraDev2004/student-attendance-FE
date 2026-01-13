@@ -22,6 +22,8 @@ type Profile = {
   address?: string | null;
   province?: string | null;
   region?: Region;
+  vip_package_type?: "lifetime" | "one_day" | "one_week" | "one_month" | "one_year" | null;
+  vip_expires_at?: string | null;
 };
 
 const REGION_LABELS: Record<Exclude<Region, null>, string> = {
@@ -90,13 +92,18 @@ export default function ProfilePage() {
       setLoading(false);
       return;
     }
+    let isMounted = true;
     (async () => {
       try {
         setLoading(true);
         const data = await apiFetch<Profile>("/profile", {
           authToken: accessToken,
         });
+        if (!isMounted) return;
+        
         setProfile(data);
+        // Không update session trong useEffect để tránh vòng lặp vô hạn
+        // Session sẽ được update tự động khi refresh token hoặc sau payment thành công
         setFormData({
           username: data.username ?? "",
           email: data.email ?? "",
@@ -108,11 +115,18 @@ export default function ProfilePage() {
           data.image_url ? `${API_BASE_URL}${data.image_url}` : null
         );
       } catch (err) {
+        if (!isMounted) return;
         setError((err as Error).message);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     })();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [status, accessToken]);
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -314,6 +328,41 @@ export default function ProfilePage() {
                 <span className="font-semibold">Trạng thái:</span>{" "}
                 {profile.account_status === "vip" ? "VIP" : "Khách thường"}
               </div>
+              {profile.account_status === "vip" && (
+                <>
+                  <div>
+                    <span className="font-semibold">Gói VIP:</span>{" "}
+                    {profile.vip_package_type
+                      ? profile.vip_package_type === "lifetime"
+                        ? "Vĩnh viễn"
+                        : profile.vip_package_type === "one_day"
+                        ? "1 Ngày"
+                        : profile.vip_package_type === "one_week"
+                        ? "1 Tuần"
+                        : profile.vip_package_type === "one_month"
+                        ? "1 Tháng"
+                        : profile.vip_package_type === "one_year"
+                        ? "1 Năm"
+                        : profile.vip_package_type
+                      : "Chưa cập nhật"}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Hạn VIP:</span>{" "}
+                    {profile.vip_expires_at
+                      ? `${new Date(profile.vip_expires_at).toLocaleDateString("vi-VN", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })} ${new Date(profile.vip_expires_at).toLocaleTimeString("vi-VN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}`
+                      : profile.vip_package_type === "lifetime"
+                      ? "Vĩnh viễn"
+                      : "Chưa cập nhật"}
+                  </div>
+                </>
+              )}
               <div>
                 <span className="font-semibold">Ngày tạo:</span>{" "}
                 {new Date(profile.created_at).toLocaleDateString("vi-VN")}

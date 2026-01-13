@@ -4,6 +4,7 @@ import NextAuthSessionProvider from "@/components/providers/session-provider";
 import type { Viewport } from "next";
 import PasswordSetupWatcher from "@/components/auth/PasswordSetupWatcher";
 import ChatbotWidget from "@/components/chat/ChatbotWidget";
+import SessionSyncProvider from "@/components/providers/SessionSyncProvider";
 
 export const metadata: Metadata = {
   title: {
@@ -53,6 +54,7 @@ export default function RootLayout({
     <html lang="vi" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <NextAuthSessionProvider>
+          <SessionSyncProvider />
           <PasswordSetupWatcher />
           {children}
           <ChatbotWidget />

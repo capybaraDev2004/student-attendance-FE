@@ -20,6 +20,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@hookform/resolvers": "^5.2.2",
+    "@nestjs/schedule": "^6.1.0",
     "@prisma/client": "^6.17.0",
     "axios": "^1.12.2",
     "bcryptjs": "^3.0.2",

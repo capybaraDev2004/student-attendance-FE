@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { apiFetch } from '@/lib/api';
 
 interface VipPackage {
   type: 'one_day' | 'one_week' | 'one_month' | 'one_year';
@@ -11,10 +12,10 @@ interface VipPackage {
 }
 
 const VIP_PACKAGES: VipPackage[] = [
-  { type: 'one_day', label: 'VIP 1 Ngày', price: 1000, duration: '1 ngày' },
-  { type: 'one_week', label: 'VIP 1 Tuần', price: 1000, duration: '7 ngày' },
-  { type: 'one_month', label: 'VIP 1 Tháng', price: 1000, duration: '30 ngày' },
-  { type: 'one_year', label: 'VIP 1 Năm', price: 1000, duration: '365 ngày' },
+  { type: 'one_day', label: 'VIP 1 Ngày', price: 10000, duration: '1 ngày' },
+  { type: 'one_week', label: 'VIP 1 Tuần', price: 50000, duration: '7 ngày' },
+  { type: 'one_month', label: 'VIP 1 Tháng', price: 200000, duration: '30 ngày' },
+  { type: 'one_year', label: 'VIP 1 Năm', price: 500000, duration: '365 ngày' },
 ];
 
 interface VipPackageModalProps {
@@ -23,7 +24,7 @@ interface VipPackageModalProps {
 }
 
 export default function VipPackageModal({ isOpen, onClose }: VipPackageModalProps) {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const [selectedPackage, setSelectedPackage] = useState<VipPackage | null>(null);
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -122,6 +123,19 @@ export default function VipPackageModal({ isOpen, onClose }: VipPackageModalProp
           
           if (data.status === 'paid') {
             clearInterval(interval);
+            // Refresh session để cập nhật account_status real-time
+            try {
+              // Fetch profile mới nhất từ API
+              const profileData = await apiFetch<{ account_status: string }>('/profile', {
+                authToken: session?.accessToken as string,
+              });
+              // Update session với account_status mới
+              await update({
+                account_status: profileData.account_status,
+              });
+            } catch (error) {
+              console.error('Error updating session:', error);
+            }
             // Hiển thị thông báo thành công trong 2 giây trước khi reload
             setTimeout(() => {
               onClose();
