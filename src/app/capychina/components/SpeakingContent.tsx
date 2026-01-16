@@ -497,7 +497,7 @@ export default function SpeakingContent() {
   };
 
   return (
-    <div className="rounded-3xl border border-slate-100 bg-white/95 p-6 shadow-xl space-y-4">
+    <div className="capychina-card rounded-3xl border border-slate-100 bg-white/95 p-6 shadow-xl space-y-4">
       <div className="flex flex-col gap-2">
         <h2 className="text-3xl font-bold text-slate-900">Bài tập nói</h2>
         <p className="text-base text-slate-600">

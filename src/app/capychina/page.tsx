@@ -18,6 +18,7 @@ import VocabularyContent from "./components/VocabularyContent";
 import WritingContent from "./components/WritingContent";
 import LoginRequiredModal from "@/components/auth/LoginRequiredModal";
 import VipPackageModal from "@/components/payment/VipPackageModal";
+import { showNotification } from "@/components/notification/NotificationSystem";
 
 const tipThemes = [
   { wrapper: "bg-emerald-50/80 border-emerald-100", value: "text-emerald-900", subtitle: "text-emerald-700" },
@@ -211,6 +212,22 @@ export default function CapyChinaEntryPage() {
       { title: "Làm 1 bài thi", progress: dailyTasks.contest_completed ? 1 : 0, total: 1 },
     ];
   }, [dailyTasks]);
+
+  // Show notifications when tasks are completed
+  useEffect(() => {
+    const completedQuests = currentQuests.filter((q) => q.progress >= q.total);
+    if (completedQuests.length > 0) {
+      const allCompleted = currentQuests.every((q) => q.progress >= q.total);
+      if (allCompleted) {
+        showNotification({
+          type: "success",
+          title: "Hoàn thành tất cả nhiệm vụ! 🎊",
+          message: "Bạn đã hoàn thành tất cả nhiệm vụ hôm nay. Xuất sắc!",
+          duration: 5000,
+        });
+      }
+    }
+  }, [currentQuests]);
   
   // Hiện scrollbar khi scroll, ẩn sau 1 giây
   useEffect(() => {
@@ -294,6 +311,16 @@ export default function CapyChinaEntryPage() {
             : "Làm 1 bài hôm nay để mở streak";
 
         applyStreakToCards(streakValue, subtitle);
+        
+        // Show notification for streak milestones
+        if (data.streakDays > 0 && data.streakDays % 7 === 0) {
+          showNotification({
+            type: "success",
+            title: "Chuỗi học ấn tượng! 🔥",
+            message: `Bạn đã duy trì ${data.streakDays} ngày liên tục!`,
+            duration: 4000,
+          });
+        }
       } catch (error) {
         // Silent error - chỉ log trong development
         if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
@@ -606,7 +633,7 @@ export default function CapyChinaEntryPage() {
 
       <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-8">
         {/* Top bar */}
-        <div className="rounded-3xl border border-white/60 bg-white/90 p-4 sm:p-6 shadow-xl shadow-slate-200/60 backdrop-blur overflow-hidden">
+        <div className="capychina-card rounded-3xl border border-white/60 bg-white/90 p-4 sm:p-6 shadow-xl shadow-slate-200/60 backdrop-blur overflow-hidden">
           <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-1 items-start gap-2 sm:gap-3 min-w-0 w-full">
               <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-xl sm:text-2xl font-bold text-white shadow-lg flex-shrink-0">
@@ -762,12 +789,12 @@ export default function CapyChinaEntryPage() {
                         }
                       }}
                       disabled={isLocked}
-                      className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
+                      className={`sidebar-item w-full rounded-2xl border px-4 py-3 text-left transition-all duration-300 ${
                         isLocked
                           ? "border-slate-200 bg-slate-100/50 opacity-60 cursor-not-allowed"
                           : isActive
-                          ? "border-emerald-300 bg-emerald-50 hover:-translate-y-0.5"
-                          : "border-slate-100 bg-slate-50/70 hover:border-emerald-200 hover:bg-white hover:-translate-y-0.5"
+                          ? "border-emerald-300 bg-emerald-50 hover:-translate-y-0.5 active"
+                          : "border-slate-100 bg-slate-50/70 hover:border-emerald-200 hover:bg-white hover:-translate-y-0.5 hover:shadow-md"
                       }`}
                     >
                     <div className="flex items-center justify-between">
@@ -830,7 +857,7 @@ export default function CapyChinaEntryPage() {
             ].join(" ")}
             style={isMobileView ? { width: `${mobilePanelWidth}px` } : undefined}
           >
-            <div className="rounded-3xl border border-emerald-100 bg-gradient-to-br from-white via-emerald-50/60 to-white p-5 shadow-lg">
+            <div className="capychina-card rounded-3xl border border-emerald-100 bg-gradient-to-br from-white via-emerald-50/60 to-white p-5 shadow-lg">
               <h3 className="text-lg font-semibold text-slate-900">Tiến độ cá nhân</h3>
               <div className="mt-4 space-y-4">
                 {progressCards.map((tip, index) => {
@@ -838,7 +865,7 @@ export default function CapyChinaEntryPage() {
                   return (
                   <div
                       key={tip.title}
-                      className={`rounded-2xl border p-4 ${theme.wrapper}`}
+                      className={`rounded-2xl border p-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-md ${theme.wrapper}`}
                   >
                     <p className="text-sm font-semibold text-slate-500">{tip.title}</p>
                       <p className={`text-2xl font-bold ${theme.value}`}>{tip.value}</p>
@@ -849,7 +876,7 @@ export default function CapyChinaEntryPage() {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-sky-100 bg-gradient-to-br from-white via-sky-50/70 to-white p-5 shadow-lg">
+            <div className="capychina-card rounded-3xl border border-sky-100 bg-gradient-to-br from-white via-sky-50/70 to-white p-5 shadow-lg">
               <h3 className="text-lg font-semibold text-slate-900">Nhiệm vụ hôm nay</h3>
               <p className="mt-2 text-sm text-sky-700 font-medium">
                 Hãy hoàn thành nhiệm vụ hôm nay để nhận 10 điểm
@@ -862,13 +889,13 @@ export default function CapyChinaEntryPage() {
                   return (
                     <div
                       key={quest.title}
-                      className={`rounded-2xl border p-4 ${theme.wrapper} ${isCompleted ? 'ring-2 ring-emerald-300' : ''}`}
+                      className={`rounded-2xl border p-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-md ${theme.wrapper} ${isCompleted ? 'ring-2 ring-emerald-300 animate-pulse-glow' : ''}`}
                     >
                       <div className="flex items-center justify-between text-sm text-slate-800">
                         <div className="flex items-center gap-2">
                           <p className="font-semibold text-slate-800">{quest.title}</p>
                           {isCompleted && (
-                            <span className="px-2 py-0.5 text-xs font-bold text-emerald-700 bg-emerald-100 rounded-full">
+                            <span className="px-2 py-0.5 text-xs font-bold text-emerald-700 bg-emerald-100 rounded-full animate-fade-in-up">
                               ✓ Hoàn thành
                             </span>
                           )}
@@ -877,9 +904,9 @@ export default function CapyChinaEntryPage() {
                           {quest.progress}/{quest.total}
                         </p>
                       </div>
-                      <div className="mt-2 h-2 rounded-full bg-slate-200">
+                      <div className="mt-2 h-2 rounded-full bg-slate-200 overflow-hidden">
                         <div
-                          className={`h-full rounded-full bg-gradient-to-r ${theme.bar} ${isCompleted ? 'opacity-100' : ''}`}
+                          className={`h-full rounded-full bg-gradient-to-r progress-bar-smooth ${theme.bar} ${isCompleted ? 'opacity-100' : ''}`}
                           style={{ width: `${percent}%` }}
                         />
                       </div>

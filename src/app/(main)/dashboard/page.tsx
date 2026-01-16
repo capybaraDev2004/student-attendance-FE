@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
+
+import { apiFetch } from "@/lib/api";
 
 type StatCardProps = {
   title: string;
@@ -186,21 +189,140 @@ function RecentActivityItem({ item }: { item: Activity }) {
 
 /* ========== PAGE ========== */
 export default function DashboardPage() {
-  // Dữ liệu giả lập có thể thay bằng API trong tương lai
-  const today = useMemo(() => formatTodayDDMMYYYY(new Date()), []);
-  const stats = {
-    streakDays: 7,
-    xp: 1250,
-    lessonsDone: 24,
-    wordsMemorized: 350,
-    weeklyGoalPercent: 72,
-  };
+  const { data: session, status } = useSession();
+  const accessToken = (session as any)?.accessToken as string | undefined;
 
-  const recentActivities: Activity[] = [
-    { label: "Hoàn thành Bài 5 - Phát âm cơ bản", time: "Hôm nay", kind: "complete" },
-    { label: "Ôn lại 20 từ vựng - Chủ đề Gia đình", time: "Hôm qua", kind: "review" },
-    { label: "Hoàn thành Bài 4 - Thanh điệu", time: "2 ngày trước", kind: "lesson" },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [streak, setStreak] = useState<{
+    streakDays: number;
+    hasToday: boolean;
+    lastActiveDate: string | null;
+  } | null>(null);
+
+  const [todayTasks, setTodayTasks] = useState<{
+    vocabulary_count: number;
+    sentence_count: number;
+    contest_completed: boolean;
+  } | null>(null);
+
+  const today = useMemo(() => formatTodayDDMMYYYY(new Date()), []);
+
+  // Load dữ liệu thật từ API
+  useEffect(() => {
+    if (status !== "authenticated" || !accessToken) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        setLoading(true);
+
+        const [streakRes, tasksRes] = await Promise.all([
+          apiFetch<{
+            streakDays: number;
+            hasToday: boolean;
+            lastActiveDate: string | null;
+          }>("/contest-progress/streak", {
+            authToken: accessToken,
+          }),
+          apiFetch<{
+            vocabulary_count: number;
+            sentence_count: number;
+            contest_completed: boolean;
+          }>("/daily-tasks/today", {
+            authToken: accessToken,
+          }),
+        ]);
+
+        if (cancelled) return;
+        setStreak(streakRes);
+        setTodayTasks(tasksRes);
+      } catch (error) {
+        if (process.env.NODE_ENV === "development") {
+          // eslint-disable-next-line no-console
+          console.error("Không tải được dữ liệu dashboard:", error);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [status, accessToken]);
+
+  const stats = useMemo(() => {
+    const streakDays = streak?.streakDays ?? 0;
+    const vocabToday = todayTasks?.vocabulary_count ?? 0;
+    const sentenceToday = todayTasks?.sentence_count ?? 0;
+    const contestCompleted = todayTasks?.contest_completed ?? false;
+
+    // Tính % hoàn thành mục tiêu trong ngày: 10 từ + 5 câu + 1 bài test
+    const vocabRatio = Math.min(1, vocabToday / 10);
+    const sentenceRatio = Math.min(1, sentenceToday / 5);
+    const testRatio = contestCompleted ? 1 : 0;
+    const weeklyGoalPercent = Math.round(((vocabRatio + sentenceRatio + testRatio) / 3) * 100);
+
+    return {
+      streakDays,
+      vocabToday,
+      sentenceToday,
+      weeklyGoalPercent,
+    };
+  }, [streak, todayTasks]);
+
+  // Hoạt động gần đây sinh động hơn dựa trên dữ liệu thật
+  const recentActivities: Activity[] = useMemo(() => {
+    const items: Activity[] = [];
+
+    if (todayTasks?.contest_completed) {
+      items.push({
+        label: "Hoàn thành bài luyện tập hôm nay",
+        time: "Hôm nay",
+        kind: "complete",
+      });
+    }
+
+    if ((todayTasks?.vocabulary_count ?? 0) > 0) {
+      items.push({
+        label: `Đã học ${todayTasks!.vocabulary_count}/10 từ vựng mục tiêu ngày`,
+        time: "Hôm nay",
+        kind: "review",
+      });
+    }
+
+    if ((todayTasks?.sentence_count ?? 0) > 0) {
+      items.push({
+        label: `Đã luyện ${todayTasks!.sentence_count}/5 câu nói hôm nay`,
+        time: "Hôm nay",
+        kind: "lesson",
+      });
+    }
+
+    if ((streak?.streakDays ?? 0) > 0) {
+      items.push({
+        label: `Chuỗi học liên tục ${streak!.streakDays} ngày`,
+        time: streak?.hasToday ? "Đến hôm nay" : "Gần đây",
+        kind: "complete",
+      });
+    }
+
+    if (items.length === 0) {
+      items.push({
+        label: "Bắt đầu bài học đầu tiên của bạn",
+        time: "Hôm nay",
+        kind: "lesson",
+      });
+    }
+
+    return items;
+  }, [todayTasks, streak]);
 
   return (
     <section className="section">
@@ -221,10 +343,34 @@ export default function DashboardPage() {
 
         {/* Lưới thống kê nhanh */}
         <div className="grid-responsive">
-          <StatCard title="Chuỗi ngày học" value={`${stats.streakDays} ngày`} hint="Tiếp tục duy trì nhé!" accent="amber" Icon={FireIcon} />
-          <StatCard title="Điểm kinh nghiệm" value={`XP: ${stats.xp.toLocaleString("vi-VN")}`} accent="teal" Icon={LightningIcon} />
-          <StatCard title="Bài học đã hoàn thành" value={`${stats.lessonsDone} bài`} accent="sky" Icon={CheckBadgeIcon} />
-          <StatCard title="Từ vựng đã nhớ" value={`${stats.wordsMemorized} từ`} accent="emerald" Icon={BookmarksIcon} />
+          <StatCard
+            title="Chuỗi ngày học"
+            value={`${stats.streakDays} ngày`}
+            hint={stats.streakDays > 0 ? "Tiếp tục duy trì nhé!" : "Làm 1 bài hôm nay để mở streak"}
+            accent="amber"
+            Icon={FireIcon}
+          />
+          <StatCard
+            title="Từ vựng hôm nay"
+            value={`${stats.vocabToday}/10 từ`}
+            hint="Mục tiêu mỗi ngày: 10 từ mới"
+            accent="emerald"
+            Icon={BookmarksIcon}
+          />
+          <StatCard
+            title="Câu nói hôm nay"
+            value={`${stats.sentenceToday}/5 câu`}
+            hint="Luyện nói đều để phản xạ tốt hơn"
+            accent="sky"
+            Icon={BookOpenIcon}
+          />
+          <StatCard
+            title="Hoàn thành mục tiêu ngày"
+            value={`${stats.weeklyGoalPercent}%`}
+            hint="Dựa trên từ vựng, câu nói và bài luyện tập hôm nay"
+            accent="teal"
+            Icon={LightningIcon}
+          />
         </div>
 
         {/* Khu vực tiến độ tuần */}
@@ -233,8 +379,10 @@ export default function DashboardPage() {
             <div className="card-body">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Tiến độ mục tiêu tuần</h3>
-                  <p className="muted mb-3">Hoàn thành ít nhất 5 bài học và 50 từ vựng trong tuần này</p>
+                  <h3 className="text-lg font-semibold mb-2">Tiến độ mục tiêu ngày</h3>
+                  <p className="muted mb-3">
+                    Hoàn thành 10 từ vựng, 5 câu nói và 1 bài luyện tập để đạt 100% mục tiêu ngày hôm nay.
+                  </p>
                 </div>
               </div>
               <ProgressBar percent={stats.weeklyGoalPercent} />

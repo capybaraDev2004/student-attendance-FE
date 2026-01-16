@@ -29,67 +29,74 @@ export default function Header() {
 
 	return (
 		<>
-            <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/60 shadow-sm">
+            <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200/60 shadow-lg">
                 <div className="container">
-					<div className="flex h-16 items-center justify-between">
-						{/* Logo */}
-						<Link href="/" className="flex items-center space-x-2 group">
-							<div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white font-bold text-sm transform group-hover:scale-105 transition-transform duration-300">
-								中
+					<div className="flex h-20 items-center justify-between">
+						{/* Logo - Enhanced */}
+						<Link href="/" className="flex items-center space-x-3 group">
+							<div className="relative">
+								<div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl blur opacity-40 group-hover:opacity-60 transition-opacity"></div>
+								<div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow-lg transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+									中
+								</div>
 							</div>
-							<span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent">
+							<span className="text-2xl font-bold bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-700 bg-clip-text text-transparent group-hover:from-emerald-500 group-hover:to-teal-600 transition-all">
 								CapyChina
 							</span>
 						</Link>
 
-                        {/* Desktop Navigation */}
-                        <nav className="hidden md:flex items-center space-x-1">
+                        {/* Desktop Navigation - Enhanced */}
+                        <nav className="hidden md:flex items-center space-x-2">
 							<Link 
-								className={`nav-link ${pathname === "/" ? "active" : ""}`} 
+								className={`relative px-4 py-2 rounded-xl font-semibold text-slate-700 hover:text-emerald-600 transition-all duration-300 hover:bg-emerald-50 ${pathname === "/" ? "bg-emerald-100 text-emerald-700" : ""}`} 
 								href="/"
 							>
 								Trang chủ
 							</Link>
                             {isLoggedIn && (
                                 <Link 
-                                    className={`nav-link ${pathname?.startsWith("/dashboard") ? "active" : ""}`} 
+                                    className={`relative px-4 py-2 rounded-xl font-semibold text-slate-700 hover:text-emerald-600 transition-all duration-300 hover:bg-emerald-50 ${pathname?.startsWith("/dashboard") ? "bg-emerald-100 text-emerald-700" : ""}`} 
                                     href="/dashboard"
                                 >
                                     Dashboard
                                 </Link>
                             )}
 							<Link 
-								className={`nav-link ${pathname?.startsWith("/roadmap") ? "active" : ""}`} 
+								className={`relative px-4 py-2 rounded-xl font-semibold text-slate-700 hover:text-emerald-600 transition-all duration-300 hover:bg-emerald-50 ${pathname?.startsWith("/roadmap") ? "bg-emerald-100 text-emerald-700" : ""}`} 
 								href="/roadmap"
 							>
 								Lộ trình
 							</Link>
 						<Link 
-							className={`nav-link ${pathname?.startsWith("/capychina") ? "active" : ""}`} 
+							className={`relative px-4 py-2 rounded-xl font-semibold text-slate-700 hover:text-emerald-600 transition-all duration-300 hover:bg-emerald-50 ${pathname?.startsWith("/capychina") ? "bg-emerald-100 text-emerald-700" : ""}`} 
 							href="/capychina"
 							onClick={handleStartLearningClick}
 						>
 							Bắt đầu học
 						</Link>
 							<Link 
-								className={`nav-link ${pathname?.startsWith("/vocabulary") ? "active" : ""}`} 
+								className={`relative px-4 py-2 rounded-xl font-semibold text-slate-700 hover:text-emerald-600 transition-all duration-300 hover:bg-emerald-50 ${pathname?.startsWith("/vocabulary") ? "bg-emerald-100 text-emerald-700" : ""}`} 
 								href="/vocabulary"
 							>
 								Từ vựng
 							</Link>
 						</nav>
 
-                        {/* Desktop Auth Buttons */}
+                        {/* Desktop Auth Buttons - Enhanced */}
                         <div className="hidden md:flex items-center space-x-3">
                             {!mounted || status === "loading" ? (
                                 <>
-                                    <span className="btn btn-ghost btn-sm pointer-events-none opacity-60">Đăng nhập</span>
-                                    <span className="btn btn-primary btn-sm pointer-events-none opacity-60">Đăng ký</span>
+                                    <span className="px-5 py-2.5 rounded-xl font-semibold text-slate-700 bg-slate-100 pointer-events-none opacity-60">Đăng nhập</span>
+                                    <span className="px-5 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 pointer-events-none opacity-60 shadow-lg">Đăng ký</span>
                                 </>
                             ) : !session?.user ? (
                                 <>
-                                    <Link href="/login" className="btn btn-ghost btn-sm">Đăng nhập</Link>
-                                    <Link href="/register" className="btn btn-primary btn-sm">Đăng ký</Link>
+                                    <Link href="/login" className="px-5 py-2.5 rounded-xl font-semibold text-slate-700 hover:text-emerald-600 hover:bg-emerald-50 transition-all duration-300">
+                                        Đăng nhập
+                                    </Link>
+                                    <Link href="/register" className="group px-5 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg hover:shadow-xl hover:shadow-emerald-500/50 transform hover:scale-105 transition-all duration-300">
+                                        Đăng ký
+                                    </Link>
                                 </>
                             ) : (
                                 <div className="relative">
@@ -198,16 +205,16 @@ export default function Header() {
                             )}
                         </div>
 
-						{/* Mobile Menu Button */}
+						{/* Mobile Menu Button - Enhanced */}
 						<button 
-							className="md:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors duration-300"
+							className="md:hidden p-3 rounded-xl hover:bg-emerald-50 transition-all duration-300 border border-slate-200 hover:border-emerald-300"
 							onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
 							aria-label="Toggle mobile menu"
 						>
 							<div className="w-6 h-6 flex flex-col justify-center items-center">
-								<span className={`block h-0.5 w-6 bg-slate-600 transform transition duration-300 ease-in-out ${isMobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`} />
-								<span className={`block h-0.5 w-6 bg-slate-600 transform transition duration-300 ease-in-out ${isMobileMenuOpen ? 'opacity-0' : 'mt-1'}`} />
-								<span className={`block h-0.5 w-6 bg-slate-600 transform transition duration-300 ease-in-out ${isMobileMenuOpen ? '-rotate-45 -translate-y-1.5' : 'mt-1'}`} />
+								<span className={`block h-0.5 w-6 bg-slate-700 rounded-full transform transition duration-300 ease-in-out ${isMobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`} />
+								<span className={`block h-0.5 w-6 bg-slate-700 rounded-full transform transition duration-300 ease-in-out ${isMobileMenuOpen ? 'opacity-0' : 'mt-1.5'}`} />
+								<span className={`block h-0.5 w-6 bg-slate-700 rounded-full transform transition duration-300 ease-in-out ${isMobileMenuOpen ? '-rotate-45 -translate-y-1.5' : 'mt-1.5'}`} />
 							</div>
 						</button>
 					</div>

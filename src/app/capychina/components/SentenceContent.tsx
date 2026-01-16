@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
+import { showNotification } from "@/components/notification/NotificationSystem";
 
 type SentenceCategory = {
   id: number;
@@ -171,6 +172,16 @@ export default function SentenceContent() {
                   value: data.sentence_count // Gửi giá trị tuyệt đối từ server
                 }
               }));
+              
+              // Show notification when reaching milestones
+              if (data.sentence_count === 5) {
+                showNotification({
+                  type: "success",
+                  title: "Hoàn thành nhiệm vụ! 🎉",
+                  message: "Bạn đã học 5 câu nói hôm nay!",
+                  duration: 4000,
+                });
+              }
             }
           } else {
             const errorText = await response.text();
@@ -311,7 +322,7 @@ export default function SentenceContent() {
                   <div
                     key={s.id}
                     onClick={() => handlePlayAudio(s.hanzi)}
-                    className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4 cursor-pointer transition-all hover:border-emerald-300 hover:bg-emerald-50/50 hover:shadow-md active:scale-[0.98]"
+                    className="capychina-card rounded-2xl border border-slate-100 bg-slate-50/80 p-4 cursor-pointer transition-all hover:border-emerald-300 hover:bg-emerald-50/50 hover:shadow-md active:scale-[0.98]"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">

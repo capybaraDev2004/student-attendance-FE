@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { showNotification } from "@/components/notification/NotificationSystem";
+import VocabularyCheck from "./VocabularyCheck";
 
 type VocabularyContentProps = {
   speakPinyin: (text: string) => void;
@@ -70,6 +72,8 @@ export default function VocabularyContent({
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(8); // 4 hàng x 2 cột (mobile)
   const [memorizedMap, setMemorizedMap] = useState<Record<number, boolean>>({});
+  const [checkMode, setCheckMode] = useState(false);
+  const [playingWordId, setPlayingWordId] = useState<string | null>(null); // Track từ đang phát âm
   const selectedCategory = categories.find((cat) => cat.id === selectedCategoryId);
 
   // Set mounted state để tránh hydration mismatch
@@ -119,13 +123,46 @@ export default function VocabularyContent({
           isMemorized: next,
         }),
       });
+      
+      // Show notification
+      if (next) {
+        showNotification({
+          type: "success",
+          title: "Đã đánh dấu đã nhớ! ✅",
+          message: `Từ "${word.hanzi}" đã được lưu vào danh sách đã nhớ`,
+          duration: 2000,
+        });
+      }
     } catch (error) {
       console.error("Lỗi khi cập nhật trạng thái nhớ từ vựng:", error);
+      showNotification({
+        type: "error",
+        title: "Lỗi",
+        message: "Không thể cập nhật trạng thái. Vui lòng thử lại.",
+        duration: 3000,
+      });
     }
   };
 
   const handlePlayWord = async (word: VocabularyWord) => {
-    speakPinyin(word.pinyin);
+    // Tạo unique ID cho từ này để track
+    const wordId = word.vocabId ? `word-${word.vocabId}` : `word-${word.hanzi}-${word.pinyin}`;
+    
+    // Set từ đang phát âm
+    setPlayingWordId(wordId);
+    
+    try {
+      // Phát âm
+      await speakPinyin(word.pinyin);
+    } catch (error) {
+      console.error("Lỗi khi phát âm:", error);
+    } finally {
+      // Clear state sau khi phát âm xong (đợi một chút để animation hiển thị)
+      // Đợi lâu hơn để người dùng thấy rõ từ nào đang phát âm
+      setTimeout(() => {
+        setPlayingWordId(null);
+      }, 1000);
+    }
 
     if (!authToken || !word.vocabId) return;
 
@@ -163,6 +200,23 @@ export default function VocabularyContent({
                   value: data.vocabulary_count // Gửi giá trị tuyệt đối từ server
                 }
               }));
+              
+              // Show notification when reaching milestones
+              if (data.vocabulary_count === 10) {
+                showNotification({
+                  type: "success",
+                  title: "Hoàn thành nhiệm vụ! 🎉",
+                  message: "Bạn đã học 10 từ vựng hôm nay!",
+                  duration: 4000,
+                });
+              } else if (data.vocabulary_count === 5) {
+                showNotification({
+                  type: "info",
+                  title: "Tiến độ tốt! 💪",
+                  message: "Bạn đã học 5 từ vựng, còn 5 từ nữa để hoàn thành nhiệm vụ!",
+                  duration: 3000,
+                });
+              }
             }
           }
         })
@@ -289,7 +343,7 @@ export default function VocabularyContent({
   }
 
   return (
-    <div className="rounded-3xl border border-slate-100 bg-white/95 p-6 shadow-xl">
+    <div className="capychina-card rounded-3xl border border-slate-100 bg-white/95 p-6 shadow-xl">
       <div className="flex flex-col gap-4">
         <div>
           <h2 className="text-3xl font-bold text-slate-900">Học theo chủ đề</h2>
@@ -353,13 +407,13 @@ export default function VocabularyContent({
         )}
 
         {/* Danh sách từ vựng khi chọn chủ đề */}
-        {selectedCategory && (
+        {selectedCategory && !checkMode && (
           <div>
             {/* Header với nút quay lại */}
             <div className="mb-4 flex items-center gap-4">
               <button
                 onClick={() => setSelectedCategoryId(null)}
-                className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-all hover:bg-slate-50 hover:shadow-sm"
+                className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-all hover:bg-slate-50 hover:shadow-sm hover:scale-105 active:scale-95"
                 aria-label="Quay lại"
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
@@ -370,6 +424,14 @@ export default function VocabularyContent({
               <h3 className="text-2xl font-bold text-slate-900">{selectedCategory.name}</h3>
               <span className="text-sm text-slate-500">({selectedCategory.wordCount} từ vựng)</span>
               </div>
+              {selectedWords.length > 0 && (
+                <button
+                  onClick={() => setCheckMode(true)}
+                  className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 btn-enhanced"
+                >
+                  🎯 Kiểm tra từ vựng
+                </button>
+              )}
             </div>
 
             {/* Ghi chú phát âm */}
@@ -417,12 +479,20 @@ export default function VocabularyContent({
                         typeof word.vocabId === "number"
                           ? !!memorizedMap[word.vocabId]
                           : false;
+                      
+                      // Tạo unique ID để check xem từ này có đang phát âm không
+                      const wordId = word.vocabId ? `word-${word.vocabId}` : `word-${word.hanzi}-${word.pinyin}`;
+                      const isPlaying = playingWordId === wordId;
 
                       return (
                   <div
                     key={index}
                           onClick={() => handlePlayWord(word)}
-                          className="relative group flex flex-col rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm transition-all hover:border-emerald-300 hover:shadow-md hover:bg-emerald-50/30 cursor-pointer active:scale-[0.98]"
+                          className={`vocab-card relative group flex flex-col rounded-xl border-2 px-3 py-3 shadow-sm transition-all duration-300 cursor-pointer ${
+                            isPlaying
+                              ? "border-emerald-500 bg-emerald-100 shadow-lg scale-[1.02] ring-2 ring-emerald-300 ring-opacity-50"
+                              : "border-slate-200 bg-white hover:border-emerald-400 hover:bg-emerald-50 hover:shadow-md active:scale-[0.98]"
+                          }`}
                           role="button"
                           tabIndex={0}
                           onKeyDown={(e) => {
@@ -561,6 +631,32 @@ export default function VocabularyContent({
             <p className="text-sm font-semibold text-slate-500">
               Chọn một chủ đề ở trên để xem danh sách từ vựng
             </p>
+          </div>
+        )}
+
+        {/* Vocabulary Check Mode */}
+        {selectedCategory && checkMode && (
+          <div>
+            <div className="mb-4 flex items-center gap-4">
+              <button
+                onClick={() => setCheckMode(false)}
+                className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-all hover:bg-slate-50 hover:shadow-sm hover:scale-105 active:scale-95"
+                aria-label="Quay lại"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div className="flex-1">
+                <h3 className="text-2xl font-bold text-slate-900">Kiểm tra: {selectedCategory.name}</h3>
+                <span className="text-sm text-slate-500">({selectedWords.length} từ vựng)</span>
+              </div>
+            </div>
+            <VocabularyCheck
+              words={selectedWords}
+              onComplete={() => setCheckMode(false)}
+              speakPinyin={speakPinyin}
+            />
           </div>
         )}
       </div>

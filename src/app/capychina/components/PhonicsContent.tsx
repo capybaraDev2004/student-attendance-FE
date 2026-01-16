@@ -201,7 +201,7 @@ export default function PhonicsContent({ speakPinyin }: PhonicsContentProps) {
   return (
     <>
       {/* Header */}
-      <div className="rounded-3xl border border-slate-100 bg-white/95 p-6 shadow-xl">
+      <div className="capychina-card rounded-3xl border border-slate-100 bg-white/95 p-6 shadow-xl">
         <div className="flex flex-col items-center gap-4 text-center">
           <p className="premium-heading">
             Khóa học Pinyin nền tảng
@@ -214,7 +214,7 @@ export default function PhonicsContent({ speakPinyin }: PhonicsContentProps) {
         </div>
 
       {/* Bảng 1: VẬN MẪU LÀ GÌ? - Bảng phiên âm tiếng Trung */}
-      <div className="rounded-3xl border border-slate-100 bg-white/95 p-6 shadow-xl">
+      <div className="capychina-card rounded-3xl border border-slate-100 bg-white/95 p-6 shadow-xl">
         <h2 className="mb-4 text-2xl font-bold text-slate-900">1. VẬN MẪU LÀ GÌ?</h2>
         <p className="mb-4 text-base lg:text-lg text-slate-600">
           Vận mẫu có thể hiểu là phụ âm vần của một âm tiết tiếng Trung. Vận mẫu được coi là thành phần cơ bản của một âm tiết tiếng Trung. Vì một âm tiết có thể thiếu Thanh mẫu hoặc Thanh điệu nhưng không thể thiếu Vận mẫu. Tổng cộng có 36 vận mẫu.
@@ -238,7 +238,7 @@ export default function PhonicsContent({ speakPinyin }: PhonicsContentProps) {
                       {finals.map((pinyin) => (
                         <span
                           key={pinyin}
-                          className="rounded-lg bg-emerald-50 px-3 py-1.5 text-base lg:text-lg font-semibold text-emerald-700"
+                          className="rounded-lg bg-emerald-50 px-3 py-1.5 text-base lg:text-lg font-semibold text-emerald-700 transition-all hover:bg-emerald-100 hover:scale-105 cursor-pointer"
                         >
                           {pinyin}
                         </span>
@@ -277,7 +277,7 @@ export default function PhonicsContent({ speakPinyin }: PhonicsContentProps) {
                     <button
                       type="button"
                         onClick={() => speakPinyin(vowel.pinyin)}
-                        className="flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-1.5 text-base font-semibold text-emerald-700 transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                        className="btn-enhanced flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-1.5 text-base font-semibold text-emerald-700 transition-all hover:bg-emerald-100 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                     >
                         <span>🔊</span>
                         {vowel.pinyin}

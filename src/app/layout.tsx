@@ -5,6 +5,7 @@ import type { Viewport } from "next";
 import PasswordSetupWatcher from "@/components/auth/PasswordSetupWatcher";
 import ChatbotWidget from "@/components/chat/ChatbotWidget";
 import SessionSyncProvider from "@/components/providers/SessionSyncProvider";
+import NotificationSystem from "@/components/notification/NotificationSystem";
 
 export const metadata: Metadata = {
   title: {
@@ -58,6 +59,7 @@ export default function RootLayout({
           <PasswordSetupWatcher />
           {children}
           <ChatbotWidget />
+          <NotificationSystem />
         </NextAuthSessionProvider>
       </body>
     </html>

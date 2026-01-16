@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { vocabularyCategories } from "../data";
 import { API_BASE, apiFetch } from "@/lib/api";
+import { showNotification } from "@/components/notification/NotificationSystem";
 
 type Word = { hanzi: string; pinyin: string; meaning: string; example?: string };
 
@@ -308,6 +309,19 @@ export default function ContestContent() {
     // Chỉ khi trả lời đúng mới gọi API lưu vào CSDL
     if (isCorrect) {
       recordCorrectAnswer();
+      showNotification({
+        type: "success",
+        title: "Đúng rồi! ✅",
+        message: "Tiếp tục phát huy!",
+        duration: 2000,
+      });
+    } else {
+      showNotification({
+        type: "error",
+        title: "Sai rồi! 😔",
+        message: "Đừng nản lòng, hãy thử lại!",
+        duration: 2000,
+      });
     }
   };
 
@@ -366,9 +380,16 @@ export default function ContestContent() {
   useEffect(() => {
     if (status === "finished" && activeLesson && !finishReportedRef.current) {
       finishReportedRef.current = true;
+      const percentage = Math.round((score.correct / (score.total || totalQuestions || 1)) * 100);
+      showNotification({
+        type: "success",
+        title: "Hoàn thành bài thi! 🎊",
+        message: `Kết quả: ${score.correct}/${score.total || totalQuestions} câu đúng (${percentage}%)`,
+        duration: 5000,
+      });
       finishContestToday();
     }
-  }, [status, activeLesson, finishContestToday]);
+  }, [status, activeLesson, finishContestToday, score, totalQuestions]);
 
   const restartAll = () => {
     setLessons(buildLessons());
@@ -539,7 +560,7 @@ export default function ContestContent() {
   };
 
   return (
-    <div className="rounded-3xl border border-slate-100 bg-white/95 p-6 shadow-xl space-y-6">
+    <div className="capychina-card rounded-3xl border border-slate-100 bg-white/95 p-6 shadow-xl space-y-6">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h2 className="text-3xl font-bold text-slate-900">Cuộc thi mini hàng tuần</h2>

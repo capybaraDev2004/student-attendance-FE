@@ -75,7 +75,7 @@ export default function LeaderboardContent() {
   }, [scope, rawRegion, rawProvince]);
 
   return (
-    <div className="rounded-3xl border border-slate-100 bg-white/95 p-6 shadow-xl">
+    <div className="capychina-card rounded-3xl border border-slate-100 bg-white/95 p-6 shadow-xl">
       <h2 className="text-3xl font-bold text-slate-900">Bảng xếp hạng CapyChina</h2>
       <p className="mt-2 text-base text-slate-600">
         Theo dõi điểm XP và chuỗi ngày học của bạn bè để có động lực duy trì nhịp học.

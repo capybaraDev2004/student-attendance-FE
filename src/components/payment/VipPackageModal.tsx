@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { apiFetch } from '@/lib/api';
 
@@ -31,6 +31,7 @@ export default function VipPackageModal({ isOpen, onClose }: VipPackageModalProp
   const [orderCode, setOrderCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'cancelled' | null>(null);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   if (!isOpen) return null;
 
@@ -105,6 +106,11 @@ export default function VipPackageModal({ isOpen, onClose }: VipPackageModalProp
     const maxAttempts = 60; // 60 lần, mỗi 5 giây = 5 phút
     let attempts = 0;
 
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+
     const interval = setInterval(async () => {
       attempts++;
       try {
@@ -123,6 +129,7 @@ export default function VipPackageModal({ isOpen, onClose }: VipPackageModalProp
           
           if (data.status === 'paid') {
             clearInterval(interval);
+            pollingRef.current = null;
             // Refresh session để cập nhật account_status real-time
             try {
               // Fetch profile mới nhất từ API
@@ -144,6 +151,7 @@ export default function VipPackageModal({ isOpen, onClose }: VipPackageModalProp
             }, 2000);
           } else if (data.status === 'cancelled' || data.status === 'cancel') {
             clearInterval(interval);
+            pollingRef.current = null;
             setError('Giao dịch đã bị hủy');
           }
         }
@@ -153,8 +161,41 @@ export default function VipPackageModal({ isOpen, onClose }: VipPackageModalProp
 
       if (attempts >= maxAttempts) {
         clearInterval(interval);
+        pollingRef.current = null;
       }
     }, 5000); // Poll every 5 seconds
+
+    pollingRef.current = interval;
+  };
+
+  const handleCancelPayment = async () => {
+    try {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+
+      if (orderCode && session?.accessToken) {
+        await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/payment/cancel/${orderCode}`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${session.accessToken}`,
+            },
+          },
+        );
+      }
+    } catch (error) {
+      console.error('Error cancelling payment:', error);
+    } finally {
+      // Reset state để quay lại màn hình chọn gói
+      setQrCode(null);
+      setOrderCode(null);
+      setPaymentStatus(null);
+      setError(null);
+      setSelectedPackage(null);
+    }
   };
 
   return (
@@ -300,12 +341,20 @@ export default function VipPackageModal({ isOpen, onClose }: VipPackageModalProp
               Vui lòng đợi vài giây...
             </p>
 
-            <button
-              onClick={onClose}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50"
-            >
-              Đóng
-            </button>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={handleCancelPayment}
+                className="rounded-xl border border-red-300 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition-all hover:bg-red-100"
+              >
+                Hủy giao dịch
+              </button>
+              <button
+                onClick={onClose}
+                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50"
+              >
+                Đóng
+              </button>
+            </div>
           </div>
         )}
       </div>
