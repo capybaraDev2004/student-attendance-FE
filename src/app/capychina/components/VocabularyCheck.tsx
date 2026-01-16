@@ -30,6 +30,8 @@ export default function VocabularyCheck({
   const [shuffledWords, setShuffledWords] = useState<VocabularyWord[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState<VocabularyWord | null>(null);
   const [options, setOptions] = useState<string[]>([]);
+  const [isFinished, setIsFinished] = useState(false);
+  const [finalScore, setFinalScore] = useState({ correct: 0, total: 0 });
 
   useEffect(() => {
     if (words.length === 0) return;
@@ -59,10 +61,28 @@ export default function VocabularyCheck({
     const correct = answer === currentQuestion.meaning;
     setIsCorrect(correct);
     setShowResult(true);
-    setScore((prev) => ({
-      correct: prev.correct + (correct ? 1 : 0),
-      total: prev.total + 1,
-    }));
+    
+    // Kiểm tra xem đây có phải câu cuối cùng không
+    const isLastQuestion = currentIndex + 1 >= shuffledWords.length;
+    
+    // Cập nhật score - FIX: Đảm bảo tính đúng cả câu cuối cùng
+    // Sử dụng functional update để đảm bảo tính chính xác
+    setScore((prev) => {
+      const newScore = {
+        correct: prev.correct + (correct ? 1 : 0),
+        total: prev.total + 1,
+      };
+      
+      // Nếu là câu cuối, lưu vào finalScore và chuyển sang trang tổng kết sau 2 giây
+      if (isLastQuestion) {
+        setTimeout(() => {
+          setFinalScore(newScore);
+          setIsFinished(true);
+        }, 2000);
+      }
+      
+      return newScore;
+    });
 
     // Show notification
     if (correct) {
@@ -80,28 +100,22 @@ export default function VocabularyCheck({
         duration: 4000,
       });
     }
-
-    // Auto next after 2 seconds
-    setTimeout(() => {
-      nextQuestion();
-    }, 2000);
+    
+    // Auto next after 2 seconds (chỉ nếu không phải câu cuối)
+    if (!isLastQuestion) {
+      setTimeout(() => {
+        nextQuestion();
+      }, 2000);
+    }
   };
 
   const nextQuestion = () => {
-    if (currentIndex + 1 >= shuffledWords.length) {
-      // Completed
-      const percentage = Math.round((score.correct / (score.total + 1)) * 100);
-      showNotification({
-        type: "success",
-        title: "Hoàn thành kiểm tra! 🎊",
-        message: `Bạn đã đúng ${score.correct + (isCorrect ? 1 : 0)}/${shuffledWords.length} từ (${percentage}%)`,
-        duration: 5000,
-      });
-      if (onComplete) onComplete();
+    const nextIndex = currentIndex + 1;
+    if (nextIndex >= shuffledWords.length) {
+      // Không nên đến đây vì đã xử lý trong handleAnswer
       return;
     }
 
-    const nextIndex = currentIndex + 1;
     setCurrentIndex(nextIndex);
     const nextWord = shuffledWords[nextIndex];
     setCurrentQuestion(nextWord);
@@ -110,6 +124,110 @@ export default function VocabularyCheck({
     setShowResult(false);
     setIsCorrect(null);
   };
+
+  const handleRestart = () => {
+    // Reset tất cả state
+    setCurrentIndex(0);
+    setScore({ correct: 0, total: 0 });
+    setSelectedAnswer(null);
+    setShowResult(false);
+    setIsCorrect(null);
+    setIsFinished(false);
+    setFinalScore({ correct: 0, total: 0 });
+    
+    // Shuffle lại words
+    const shuffled = [...words].sort(() => Math.random() - 0.5);
+    setShuffledWords(shuffled);
+    setCurrentQuestion(shuffled[0]);
+    generateOptions(shuffled[0], shuffled);
+  };
+
+  const handleExit = () => {
+    if (onComplete) onComplete();
+  };
+
+  // Trang tổng kết
+  if (isFinished) {
+    const percentage = finalScore.total > 0 
+      ? Math.round((finalScore.correct / finalScore.total) * 100)
+      : 0;
+    const isPerfect = finalScore.correct === finalScore.total && finalScore.total > 0;
+    
+    return (
+      <div className="rounded-3xl border border-slate-100 bg-white/95 p-6 shadow-xl">
+        <div className="text-center space-y-6">
+          {/* Icon và tiêu đề */}
+          <div className="flex flex-col items-center gap-4">
+            {isPerfect ? (
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-2xl animate-pulse-glow">
+                <svg className="w-16 h-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            ) : percentage >= 70 ? (
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center shadow-2xl">
+                <span className="text-5xl">👍</span>
+              </div>
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-2xl">
+                <span className="text-5xl">💪</span>
+              </div>
+            )}
+            
+            <h2 className="text-3xl font-bold text-slate-900">
+              {isPerfect ? "Hoàn hảo! 🎊" : percentage >= 70 ? "Tốt lắm! 👏" : "Cố gắng thêm! 💪"}
+            </h2>
+          </div>
+
+          {/* Kết quả chi tiết */}
+          <div className="space-y-4">
+            <div className="rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 p-6">
+              <p className="text-lg text-slate-600 mb-2">Kết quả kiểm tra</p>
+              <p className="text-5xl font-bold text-emerald-700 mb-2">
+                {finalScore.correct}/{finalScore.total}
+              </p>
+              <p className="text-2xl font-semibold text-emerald-600">
+                {percentage}%
+              </p>
+            </div>
+
+            {/* Thông điệp */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              {isPerfect ? (
+                <p className="text-base text-slate-700">
+                  Bạn đã trả lời đúng tất cả các câu hỏi! Xuất sắc! 🌟
+                </p>
+              ) : percentage >= 70 ? (
+                <p className="text-base text-slate-700">
+                  Kết quả tốt! Hãy tiếp tục luyện tập để đạt 100% nhé! 📚
+                </p>
+              ) : (
+                <p className="text-base text-slate-700">
+                  Đừng nản lòng! Hãy ôn tập lại và thử lại nhé! 💪
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Nút hành động */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+            <button
+              onClick={handleRestart}
+              className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 btn-enhanced"
+            >
+              🔄 Làm lại
+            </button>
+            <button
+              onClick={handleExit}
+              className="px-6 py-3 bg-white border-2 border-slate-300 text-slate-700 rounded-xl font-semibold shadow-md hover:bg-slate-50 hover:border-slate-400 transition-all hover:scale-105 active:scale-95"
+            >
+              ← Thoát ra
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentQuestion || shuffledWords.length === 0) {
     return (
