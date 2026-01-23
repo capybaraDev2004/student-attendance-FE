@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { apiFetch } from '@/lib/api';
 
@@ -32,6 +32,32 @@ export default function VipPackageModal({ isOpen, onClose }: VipPackageModalProp
   const [error, setError] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'cancelled' | null>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const hasReloadedRef = useRef<boolean>(false); // Prevent multiple reloads
+
+  // Cleanup polling when modal closes or component unmounts
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+  }, []);
+
+  // Reset reload flag when modal opens, but check localStorage first
+  useEffect(() => {
+    if (isOpen) {
+      // Check if we just reloaded due to payment success
+      const justReloaded = sessionStorage.getItem('vip_payment_reload');
+      if (justReloaded) {
+        // Clear the flag and don't reset hasReloadedRef
+        sessionStorage.removeItem('vip_payment_reload');
+        hasReloadedRef.current = true; // Prevent any further reloads
+      } else {
+        hasReloadedRef.current = false;
+      }
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -41,6 +67,7 @@ export default function VipPackageModal({ isOpen, onClose }: VipPackageModalProp
     setOrderCode(null);
     setError(null);
     setPaymentStatus(null);
+    hasReloadedRef.current = false; // Reset reload flag when selecting new package
   };
 
   const handleCreatePayment = async () => {
@@ -128,8 +155,15 @@ export default function VipPackageModal({ isOpen, onClose }: VipPackageModalProp
           setPaymentStatus(data.status); // Cập nhật status để render UI
           
           if (data.status === 'paid') {
+            // Prevent multiple reloads - check flag trước khi xử lý
+            if (hasReloadedRef.current) {
+              return;
+            }
+            
             clearInterval(interval);
             pollingRef.current = null;
+            hasReloadedRef.current = true; // Set flag ngay để prevent multiple calls
+            
             // Refresh session để cập nhật account_status real-time
             try {
               // Fetch profile mới nhất từ API
@@ -143,11 +177,25 @@ export default function VipPackageModal({ isOpen, onClose }: VipPackageModalProp
             } catch (error) {
               console.error('Error updating session:', error);
             }
+            
             // Hiển thị thông báo thành công trong 2 giây trước khi reload
             setTimeout(() => {
-              onClose();
-              // Reload page to update VIP status
-              window.location.reload();
+              // Double check flag để đảm bảo chỉ reload 1 lần
+              // Chỉ reload nếu đang ở trang /capychina và chưa reload
+              if (hasReloadedRef.current && typeof window !== 'undefined') {
+                const currentPath = window.location.pathname;
+                // Chỉ reload nếu đang ở trang capychina
+                if (currentPath === '/capychina') {
+                  // Set flag in sessionStorage để prevent reload loop
+                  sessionStorage.setItem('vip_payment_reload', 'true');
+                  onClose();
+                  // Reload page to update VIP status - chỉ reload 1 lần
+                  window.location.reload();
+                } else {
+                  // Nếu không phải trang capychina, chỉ đóng modal và update session
+                  onClose();
+                }
+              }
             }, 2000);
           } else if (data.status === 'cancelled' || data.status === 'cancel') {
             clearInterval(interval);
@@ -195,6 +243,7 @@ export default function VipPackageModal({ isOpen, onClose }: VipPackageModalProp
       setPaymentStatus(null);
       setError(null);
       setSelectedPackage(null);
+      hasReloadedRef.current = false; // Reset reload flag when cancelling
     }
   };
 

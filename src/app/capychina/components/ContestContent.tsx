@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useSession } from "next-auth/react";
 import { vocabularyCategories } from "../data";
 import { API_BASE, apiFetch } from "@/lib/api";
@@ -151,19 +152,19 @@ function ChineseKeyboard({
   onBackspace: () => void;
 }) {
   return (
-    <div className="mt-3 flex flex-wrap gap-2 rounded-2xl bg-slate-50 p-3 border border-slate-200">
+    <div className="mt-2 sm:mt-3 flex flex-wrap gap-1.5 sm:gap-2 rounded-lg bg-slate-50 p-2 sm:p-3 border border-slate-200">
       {chineseKeyboard.map((c, idx) => (
         <button
           key={`${c}-${idx}`}
           onClick={() => onInsert(c)}
-          className="h-9 px-3 rounded-lg bg-white border border-slate-200 text-base shadow-sm hover:border-emerald-400 hover:text-emerald-600"
+          className="h-8 sm:h-9 px-2 sm:px-3 rounded-md bg-white border border-slate-200 text-sm sm:text-base shadow-sm hover:border-emerald-400 hover:text-emerald-600"
         >
           {c}
         </button>
       ))}
       <button
         onClick={onBackspace}
-        className="h-9 px-3 rounded-lg bg-rose-50 border border-rose-200 text-sm font-semibold text-rose-700"
+        className="h-8 sm:h-9 px-2 sm:px-3 rounded-md bg-rose-50 border border-rose-200 text-xs sm:text-sm font-semibold text-rose-700"
       >
         ⌫ Xóa
       </button>
@@ -185,6 +186,7 @@ export default function ContestContent() {
   const [score, setScore] = useState({ correct: 0, total: 0 });
   const [result, setResult] = useState<ResultState | null>(null);
   const [draft, setDraft] = useState("");
+  const [showConfirmQuit, setShowConfirmQuit] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const finishReportedRef = useRef(false);
 
@@ -288,7 +290,19 @@ export default function ContestContent() {
     setScore({ correct: 0, total: 0 });
     setResult(null);
     setDraft("");
+    setShowConfirmQuit(false);
     finishReportedRef.current = false;
+  };
+
+  const handleQuit = () => {
+    // Bỏ cuộc: quay về danh sách, không lưu kết quả
+    setStatus("idle");
+    setActiveLesson(null);
+    setScore({ correct: 0, total: 0 });
+    setResult(null);
+    setDraft("");
+    setShowConfirmQuit(false);
+    if (timerRef.current) clearTimeout(timerRef.current);
   };
 
   const handleAnswer = (value: string) => {
@@ -418,7 +432,7 @@ export default function ContestContent() {
             <img
               src={currentQuestion.image}
               alt="Flashcard"
-              className="w-full max-w-3xl h-[220px] md:h-[260px] rounded-2xl border border-emerald-100 shadow-md bg-white object-contain"
+              className="w-full max-w-2xl h-[180px] sm:h-[220px] md:h-[260px] rounded-lg border border-emerald-100 shadow-md bg-white object-contain"
               onError={(e) => {
                 const target = e.currentTarget;
                 if (target.src !== flashcardImages[0]) {
@@ -430,10 +444,10 @@ export default function ContestContent() {
         ) : null;
 
       return (
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm flex flex-col gap-4 h-full">
+        <div className="rounded-lg border border-slate-200 bg-white p-3 sm:p-4 shadow-sm flex flex-col gap-3 sm:gap-4 h-full">
           {/* Khung đề bài */}
-          <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 px-4 py-3 text-center">
-            <p className="text-base md:text-lg font-semibold text-slate-900 leading-snug">
+          <div className="rounded-md border border-emerald-100 bg-emerald-50/40 px-3 sm:px-4 py-2 sm:py-3 text-center">
+            <p className="text-sm sm:text-base md:text-lg font-semibold text-slate-900 leading-snug">
               {promptText}
             </p>
           </div>
@@ -446,7 +460,7 @@ export default function ContestContent() {
           )}
 
           {/* Vùng đáp án luôn nằm cuối, mỗi hàng luôn 2 ô (kể cả trên mobile) */}
-          <div className="grid grid-cols-2 gap-3 pt-1">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 pt-1">
             {currentQuestion.options.map((opt) => {
               const isCorrect = result && opt === currentQuestion.correct;
               const isSelectedWrong =
@@ -463,7 +477,7 @@ export default function ContestContent() {
                   key={opt}
                   disabled={isLocked}
                   onClick={() => handleAnswer(opt)}
-                  className={`rounded-lg border px-3 py-2 text-left text-base transition shadow-sm ${stateClass} ${
+                  className={`rounded-md border px-2 sm:px-3 py-2 text-left text-sm sm:text-base transition shadow-sm ${stateClass} ${
                     !result ? "hover:shadow" : ""
                   } ${isSelectedWrong && !isCorrect ? "text-slate-700" : ""}`}
                 >
@@ -481,10 +495,10 @@ export default function ContestContent() {
     const isWrong = result && result.correct === false;
     const isRight = result && result.correct === true;
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
+      <div className="rounded-lg border border-slate-200 bg-white p-3 sm:p-4 shadow-sm space-y-2 sm:space-y-3">
         {/* Khung đề bài */}
-        <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 px-4 py-3 text-center">
-          <p className="text-base md:text-lg font-semibold text-slate-900 leading-snug">
+        <div className="rounded-md border border-emerald-100 bg-emerald-50/40 px-3 sm:px-4 py-2 sm:py-3 text-center">
+          <p className="text-sm sm:text-base md:text-lg font-semibold text-slate-900 leading-snug">
             {currentQuestion.sentenceWithBlank}
           </p>
         </div>
@@ -493,7 +507,7 @@ export default function ContestContent() {
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           disabled={isLocked}
-          className={`w-full rounded-lg border px-3 py-2 focus:outline-none ${
+          className={`w-full rounded-md border px-3 py-2 text-sm sm:text-base focus:outline-none ${
             isRight ? "border-emerald-400" : isWrong ? "border-rose-300" : "border-slate-200 focus:border-emerald-500"
           }`}
           placeholder="Điền chữ Hán"
@@ -505,7 +519,7 @@ export default function ContestContent() {
         <button
           disabled={isLocked}
           onClick={() => handleAnswer(draft)}
-          className="rounded-lg bg-emerald-500 px-4 py-2 text-white font-semibold shadow hover:bg-emerald-600 disabled:opacity-50"
+          className="rounded-md bg-emerald-500 px-4 py-2 text-white font-semibold shadow hover:bg-emerald-600 disabled:opacity-50 text-sm sm:text-base"
         >
           Chấm
         </button>
@@ -514,7 +528,7 @@ export default function ContestContent() {
   };
 
   const renderResult = () => {
-    if (!result) return null;
+    if (!result || typeof window === "undefined") return null;
     // Hiển thị từ bạn chọn và đáp án đúng trong popup
     let chosenText = "";
     let correctText = "";
@@ -528,34 +542,49 @@ export default function ContestContent() {
       }
     }
 
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+    return createPortal(
+      <div 
+        className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 px-4"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100vw',
+          height: '100vh',
+          margin: 0,
+          zIndex: 10000,
+          overflow: 'visible'
+        }}
+      >
         <div
-          className={`rounded-2xl border p-6 shadow-2xl text-center max-w-sm w-full animate-fade-in ${
+          className={`rounded-lg border p-4 sm:p-6 shadow-2xl text-center max-w-sm w-full animate-fade-in ${
             result.correct ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-rose-200 bg-rose-50 text-rose-700"
           }`}
         >
           <div className="flex flex-col items-center gap-2">
-            <div className="text-5xl drop-shadow">{result.correct ? "✅" : "⚠️"}</div>
-            <p className="text-2xl font-bold tracking-tight">
+            <div className="text-4xl sm:text-5xl drop-shadow">{result.correct ? "✅" : "⚠️"}</div>
+            <p className="text-xl sm:text-2xl font-bold tracking-tight">
               {result.correct ? "Đúng rồi!" : "Sai rồi"}
             </p>
             {currentQuestion && (
-              <div className="mt-2 space-y-2 text-base">
+              <div className="mt-2 space-y-1.5 sm:space-y-2 text-sm sm:text-base">
                 {chosenText && (
                   <p className="text-rose-700 font-semibold">
-                    Bạn chọn: <span className="text-lg">{chosenText}</span>
+                    Bạn chọn: <span className="text-base sm:text-lg">{chosenText}</span>
                   </p>
                 )}
                 <p className="text-emerald-700 font-semibold">
-                  Đáp án đúng: <span className="text-lg">{correctText}</span>
+                  Đáp án đúng: <span className="text-base sm:text-lg">{correctText}</span>
                 </p>
               </div>
             )}
             <p className="text-xs text-slate-500 mt-2">Tự động chuyển sau 1 giây</p>
           </div>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   };
 
@@ -620,23 +649,47 @@ export default function ContestContent() {
         </>
       )}
 
-      {status === "playing" && activeLesson && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
-          <div className="relative w-full max-w-5xl max-h-[90vh] rounded-3xl border border-emerald-100 bg-gradient-to-br from-white via-emerald-50/60 to-white shadow-2xl overflow-hidden flex flex-col">
+      {status === "playing" && activeLesson && typeof window !== "undefined" && createPortal(
+        <div 
+          className="fixed inset-0 z-[9999] bg-black/40 flex items-center justify-center p-4 sm:p-6"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
+            margin: 0,
+            zIndex: 9999,
+            overflow: 'auto'
+          }}
+        >
+          <div 
+            className="w-full max-w-4xl max-h-[90vh] flex flex-col bg-gradient-to-br from-white via-emerald-50/60 to-white shadow-2xl rounded-lg border border-emerald-100"
+            style={{
+              width: '100%',
+              maxWidth: '56rem',
+              maxHeight: '90vh',
+              position: 'relative',
+              margin: 0,
+              overflow: 'hidden'
+            }}
+          >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-emerald-100 bg-white/80 backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-lg font-bold shadow">
+            <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-emerald-100 bg-white/80 backdrop-blur-sm flex-shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg bg-emerald-500 text-white flex items-center justify-center text-base sm:text-lg font-bold shadow">
                   {activeLesson.id}
                 </div>
                 <div>
-                <p className="text-lg font-semibold text-emerald-800">Bài {activeLesson.id}</p>
-                <p className="text-sm text-slate-500">
+                <p className="text-base sm:text-lg font-semibold text-emerald-800">Bài {activeLesson.id}</p>
+                <p className="text-xs sm:text-sm text-slate-500">
                     Câu {currentIndex + 1}/{totalQuestions}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
               <div className="hidden sm:flex flex-col text-right text-xs text-slate-500">
                 <span className="text-sm font-medium text-slate-500">Điểm hiện tại</span>
                 <span className="text-lg font-semibold text-emerald-700">
@@ -644,33 +697,28 @@ export default function ContestContent() {
                 </span>
               </div>
                 <button
-                  onClick={() => {
-                    // Bỏ cuộc: quay về danh sách, không lưu kết quả
-                    setStatus("idle");
-                    setActiveLesson(null);
-                    setScore({ correct: 0, total: 0 });
-                    setResult(null);
-                    setDraft("");
-                    if (timerRef.current) clearTimeout(timerRef.current);
-                  }}
-                  className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-4 py-2 text-rose-700 border border-rose-200 text-xs sm:text-sm font-semibold hover:bg-rose-100 shadow-sm"
+                  onClick={() => setShowConfirmQuit(true)}
+                  className="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg bg-rose-50 px-3 sm:px-4 py-1.5 sm:py-2 text-rose-700 border border-rose-200 text-xs sm:text-sm font-semibold hover:bg-rose-100 shadow-sm"
                 >
-                  <span className="text-sm">⏹</span>
-                  <span>Bỏ cuộc</span>
+                  <span className="text-xs sm:text-sm">⏹</span>
+                  <span className="hidden sm:inline">Bỏ cuộc</span>
+                  <span className="sm:hidden">Bỏ</span>
                 </button>
               </div>
             </div>
 
             {/* Nội dung câu hỏi - chiếm phần còn lại, cho phép cuộn nếu nhỏ màn hình */}
-            <div className="p-4 sm:p-6 max-h-[calc(90vh-5rem)] overflow-y-auto">
+            <div className="p-3 sm:p-4 md:p-6 overflow-y-auto flex-1 min-h-0">
               {renderQuestion()}
             </div>
 
-            {/* Popup kết quả (overlay riêng với z-50) */}
-            {renderResult()}
+            {/* Popup kết quả sẽ được render riêng qua Portal */}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
+      {/* Render popup kết quả qua Portal khi có result */}
+      {status === "playing" && renderResult()}
 
       {status === "finished" && (
         <div className="rounded-3xl border border-slate-200 bg-white p-6 text-center shadow space-y-3">
@@ -703,36 +751,94 @@ export default function ContestContent() {
         </div>
       )}
 
-      {/* Modal xác nhận tham gia */}
-      {pendingLesson !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="max-w-md w-full rounded-2xl bg-white p-5 shadow-xl space-y-3">
-            <p className="text-lg font-bold text-slate-900">Tham gia bài {pendingLesson}?</p>
-            <p className="text-sm text-slate-600">
+      {/* Modal xác nhận tham gia - Render qua Portal */}
+      {pendingLesson !== null && typeof window !== "undefined" && createPortal(
+        <div 
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 px-4"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
+            margin: 0,
+            zIndex: 10000,
+            overflow: 'visible'
+          }}
+        >
+          <div className="max-w-md w-full rounded-lg bg-white p-4 sm:p-5 shadow-xl space-y-3">
+            <p className="text-base sm:text-lg font-bold text-slate-900">Tham gia bài {pendingLesson}?</p>
+            <p className="text-xs sm:text-sm text-slate-600">
               Bạn sẽ làm lần lượt 20 câu, mỗi câu hiển thị đơn lẻ. Sau khi trả lời sẽ tự chuyển câu tiếp theo sau 1 giây.
             </p>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button
                 onClick={() => {
                   const lesson = lessons.find((l) => l.id === pendingLesson);
                   if (lesson) startLesson(lesson);
                   setPendingLesson(null);
                 }}
-                className="flex-1 rounded-lg bg-emerald-500 px-4 py-2 text-white font-semibold shadow hover:bg-emerald-600"
+                className="flex-1 rounded-md bg-emerald-500 px-4 py-2 text-sm sm:text-base text-white font-semibold shadow hover:bg-emerald-600"
               >
                 Xác nhận
               </button>
               <button
                 onClick={() => setPendingLesson(null)}
-                className="flex-1 rounded-lg bg-slate-200 px-4 py-2 text-slate-800 font-semibold shadow hover:bg-slate-300"
+                className="flex-1 rounded-md bg-slate-200 px-4 py-2 text-sm sm:text-base text-slate-800 font-semibold shadow hover:bg-slate-300"
               >
                 Hủy
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modal xác nhận bỏ cuộc - Render qua Portal */}
+      {showConfirmQuit && typeof window !== "undefined" && createPortal(
+        <div 
+          className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/40 px-4"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
+            margin: 0,
+            zIndex: 10001,
+            overflow: 'visible'
+          }}
+        >
+          <div className="max-w-md w-full rounded-lg bg-white p-4 sm:p-5 shadow-xl space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="text-3xl">⚠️</div>
+              <p className="text-base sm:text-lg font-bold text-slate-900">Xác nhận bỏ cuộc?</p>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-600">
+              Bạn có chắc chắn muốn bỏ cuộc? Tiến độ hiện tại sẽ không được lưu và bạn sẽ quay về danh sách bài học.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <button
+                onClick={handleQuit}
+                className="flex-1 rounded-md bg-rose-500 px-4 py-2 text-sm sm:text-base text-white font-semibold shadow hover:bg-rose-600"
+              >
+                Xác nhận bỏ cuộc
+              </button>
+              <button
+                onClick={() => setShowConfirmQuit(false)}
+                className="flex-1 rounded-md bg-slate-200 px-4 py-2 text-sm sm:text-base text-slate-800 font-semibold shadow hover:bg-slate-300"
+              >
+                Tiếp tục làm bài
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );
 }
-
