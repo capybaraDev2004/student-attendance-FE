@@ -289,6 +289,36 @@ export default function AdminDashboard() {
               <p className="text-sm text-gray-600">Thêm, sửa, xóa tin tức</p>
             </div>
           </a>
+
+          <a
+            href="/admin/payments"
+            className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+          >
+            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center mr-3">
+              <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-medium text-gray-900">Quản lý thanh toán</p>
+              <p className="text-sm text-gray-600">Xem giao dịch, xuất báo cáo, sửa giao dịch</p>
+            </div>
+          </a>
+
+          <a
+            href="/admin/statistics"
+            className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+          >
+            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+              <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 01-2-2v-6a2 2 0 012-2h2m2 4h10a2 2 0 012 2v6a2 2 0 01-2 2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-medium text-gray-900">Thống kê</p>
+              <p className="text-sm text-gray-600">Tổng quan dữ liệu và biểu đồ giao dịch</p>
+            </div>
+          </a>
         </div>
       </div>
     </div>
