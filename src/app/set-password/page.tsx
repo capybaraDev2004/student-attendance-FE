@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, ApiError } from "@/lib/api";
 
 export default function SetPasswordPage() {
   const { data: session, status, update } = useSession();
@@ -53,6 +53,11 @@ export default function SetPasswordPage() {
       await update({ mustSetPassword: false });
       setTimeout(() => router.replace("/dashboard"), 1200);
     } catch (error) {
+      // Nếu tài khoản không còn tồn tại trên server, đăng xuất và đưa về trang chủ
+      if (error instanceof ApiError && (error.status === 401 || error.status === 404)) {
+        await signOut({ callbackUrl: "/" });
+        return;
+      }
       setErrorMessage((error as Error).message);
     } finally {
       setLoading(false);

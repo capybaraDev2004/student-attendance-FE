@@ -43,6 +43,29 @@ export default function LeaderboardContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const currentUserId =
+    (session as any)?.user?.user_id ??
+    (session as any)?.user?.id ??
+    (session as any)?.user_id ??
+    null;
+
+  const myEntry = currentUserId
+    ? items.find((u) => u.user_id === currentUserId)
+    : undefined;
+
+  const myRank = myEntry?.rank ?? null;
+
+  const topTen = items.filter((u) => u.rank <= 10);
+  let xpToTop10: number | null = null;
+
+  if (myEntry && topTen.length > 0) {
+    const tenth = topTen.reduce((prev, curr) =>
+      curr.rank > prev.rank ? curr : prev
+    );
+    const diff = tenth.xp - myEntry.xp;
+    xpToTop10 = diff > 0 ? diff : 0;
+  }
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -124,7 +147,13 @@ export default function LeaderboardContent() {
             {items.map((user) => (
               <div
                 key={user.user_id}
-                className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3"
+                className={`flex items-center justify-between rounded-2xl border px-4 py-3 ${
+                  currentUserId &&
+                  user.user_id === currentUserId &&
+                  user.rank <= 10
+                    ? "border-emerald-500 bg-emerald-50/80 shadow-md"
+                    : "border-slate-100 bg-slate-50/80"
+                }`}
               >
                 <div className="flex items-center gap-4">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 text-white font-semibold text-sm">
@@ -149,6 +178,20 @@ export default function LeaderboardContent() {
           </>
         )}
       </div>
+      {!loading && !error && (
+        <div className="mt-4 flex flex-col gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-sm text-slate-700 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <span className="font-semibold">Vị trí của bạn: </span>
+            {myRank
+              ? `Hạng #${myRank}`
+              : "Chưa có trên bảng xếp hạng cho phạm vi này."}
+          </div>
+          <div>
+            <span className="font-semibold">Điểm cần để vào top 10: </span>
+            {xpToTop10 !== null ? `${xpToTop10} XP` : "Không có dữ liệu."}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

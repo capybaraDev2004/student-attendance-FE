@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
-import { apiFetch } from "@/lib/api";
+import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { apiFetch, ApiError } from "@/lib/api";
 import VipPackageModal from "@/components/payment/VipPackageModal";
 
 const API_BASE_URL =
@@ -70,6 +71,7 @@ const PROVINCES = [
 
 export default function ProfilePage() {
   const { data: session, status, update } = useSession();
+  const router = useRouter();
   const accessToken = session?.accessToken as string | undefined;
   const [profile, setProfile] = useState<Profile | null>(null);
   const [formData, setFormData] = useState({
@@ -116,6 +118,13 @@ export default function ProfilePage() {
         );
       } catch (err) {
         if (!isMounted) return;
+
+        if (err instanceof ApiError && err.status === 404) {
+          // Tài khoản không còn tồn tại trên server -> đăng xuất và về trang chủ
+          await signOut({ callbackUrl: "/" });
+          return;
+        }
+
         setError((err as Error).message);
       } finally {
         if (isMounted) {

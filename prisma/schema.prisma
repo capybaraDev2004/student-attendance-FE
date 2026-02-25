@@ -158,6 +158,7 @@ enum AccountStatus {
 enum AccountType {
   local
   google
+  facebook
 }
 
 enum Region {

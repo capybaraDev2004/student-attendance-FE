@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { apiFetch } from './api';
+import { signOut, useSession } from 'next-auth/react';
+import { apiFetch, ApiError } from './api';
 
 /**
  * Hook để tự động đồng bộ session với account_status từ API real-time
@@ -57,7 +57,17 @@ export function useSessionSync() {
           });
         }
       } catch (error) {
-        // Silent fail - không log error để tránh spam console
+        // Nếu token không còn hợp lệ hoặc user đã bị xóa → đăng xuất hoàn toàn
+        if (error instanceof ApiError && (error.status === 401 || error.status === 404)) {
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+          await signOut({ callbackUrl: '/' });
+          return;
+        }
+
+        // Các lỗi khác: log nhẹ để debug, tránh spam console
         console.debug('Session sync check failed:', error);
       }
     };

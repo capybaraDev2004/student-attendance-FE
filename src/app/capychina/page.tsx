@@ -6,9 +6,7 @@ import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { apiFetch } from "@/lib/api";
-import {
-  sidebarItems,
-} from "./data";
+import { sidebarItems } from "./data";
 import ContestContent from "./components/ContestContent";
 import LeaderboardContent from "./components/LeaderboardContent";
 import PhonicsContent from "./components/PhonicsContent";
@@ -33,6 +31,15 @@ const questThemes = [
 ];
 
 const ACTIVE_SECTION_STORAGE_KEY = "capychina-active-section";
+const DAILY_TASKS_ALL_DONE_KEY_PREFIX = "capychina-all-tasks-done-";
+
+function getTodayStorageKey() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${DAILY_TASKS_ALL_DONE_KEY_PREFIX}${year}-${month}-${day}`;
+}
 
 export default function CapyChinaEntryPage() {
   const { data: session, status } = useSession();
@@ -67,6 +74,8 @@ export default function CapyChinaEntryPage() {
   const sidebarRef = useRef<HTMLElement>(null);
   const rightPanelRef = useRef<HTMLDivElement>(null);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [hasShownAllTasksNotification, setHasShownAllTasksNotification] =
+    useState(false);
 
   // Fetch daily tasks từ CSDL
   const fetchDailyTasks = useCallback(async (silent = false) => {
@@ -213,21 +222,43 @@ export default function CapyChinaEntryPage() {
     ];
   }, [dailyTasks]);
 
+  // Đồng bộ trạng thái đã hiện thông báo từ localStorage (mỗi ngày chỉ hiện 1 lần)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const key = getTodayStorageKey();
+    const stored = window.localStorage.getItem(key);
+    if (stored === "1") {
+      setHasShownAllTasksNotification(true);
+    }
+  }, []);
+
   // Show notifications when tasks are completed
   useEffect(() => {
+    if (hasShownAllTasksNotification) {
+      return;
+    }
+
     const completedQuests = currentQuests.filter((q) => q.progress >= q.total);
     if (completedQuests.length > 0) {
       const allCompleted = currentQuests.every((q) => q.progress >= q.total);
       if (allCompleted) {
-        showNotification({
-          type: "success",
-          title: "Hoàn thành tất cả nhiệm vụ! 🎊",
-          message: "Bạn đã hoàn thành tất cả nhiệm vụ hôm nay. Xuất sắc!",
-          duration: 5000,
-        });
+        if (typeof window !== "undefined") {
+          const key = getTodayStorageKey();
+          const stored = window.localStorage.getItem(key);
+          if (stored !== "1") {
+            showNotification({
+              type: "success",
+              title: "Hoàn thành tất cả nhiệm vụ! 🎊",
+              message: "Bạn đã hoàn thành tất cả nhiệm vụ hôm nay. Xuất sắc!",
+              duration: 5000,
+            });
+            window.localStorage.setItem(key, "1");
+            setHasShownAllTasksNotification(true);
+          }
+        }
       }
     }
-  }, [currentQuests]);
+  }, [currentQuests, hasShownAllTasksNotification]);
   
   // Hiện scrollbar khi scroll, ẩn sau 1 giây
   useEffect(() => {

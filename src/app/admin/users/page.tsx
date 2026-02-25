@@ -15,7 +15,7 @@ interface User {
   verification_code: string | null;
   verification_code_expires_at: string | null;
   account_status: "normal" | "vip";
-  account_type: "local" | "google";
+  account_type: "local" | "google" | "facebook";
   must_set_password: boolean;
   address: string | null;
   province: string | null;
@@ -94,8 +94,11 @@ export default function UsersManagement() {
   const translateAccountStatus = (status: User['account_status']) =>
     status === 'vip' ? 'VIP' : 'Thường';
 
-const translateAccountType = (type: User['account_type']) =>
-  type === 'google' ? 'Google' : 'Local';
+const translateAccountType = (type: User['account_type']) => {
+  if (type === 'google') return 'Google';
+  if (type === 'facebook') return 'Facebook';
+  return 'Local';
+};
 
 const translateVipPackageType = (type: User['vip_package_type']) => {
   if (!type) return '—';
@@ -513,7 +516,7 @@ const translateVipPackageType = (type: User['vip_package_type']) => {
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
                         {translateAccountType(user.account_type)}
                       </span>
-                      {user.account_type === 'google' && user.must_set_password && (
+                      {user.account_type !== 'local' && user.must_set_password && (
                         <span className="block text-xs text-amber-600">
                           Chưa đặt mật khẩu
                         </span>
@@ -764,6 +767,7 @@ function EditUserModal({
               >
                 <option value="local">Local</option>
                 <option value="google">Google</option>
+                <option value="facebook">Facebook</option>
               </select>
             </div>
           </div>
