@@ -1,6 +1,7 @@
 import NextAuth, { type NextAuthOptions, type User as NextAuthUser } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
+import FacebookProvider from "next-auth/providers/facebook";
 import type { JWT } from "next-auth/jwt";
 
 const API_BASE_URL =
@@ -51,6 +52,12 @@ type GoogleProfile = {
 	sub?: string;
 };
 
+type FacebookProfile = {
+  email?: string;
+  name?: string | null;
+  id?: string;
+};
+
 async function loginWithGoogleProfile(profile: GoogleProfile): Promise<NestLoginResponse> {
 	if (!profile.email || !profile.sub) {
 		throw new Error("Thiếu thông tin Google");
@@ -72,6 +79,29 @@ async function loginWithGoogleProfile(profile: GoogleProfile): Promise<NestLogin
 	}
 
 	return response.json() as Promise<NestLoginResponse>;
+}
+
+async function loginWithFacebookProfile(profile: FacebookProfile): Promise<NestLoginResponse> {
+  if (!profile.id) {
+    throw new Error("Thiếu ID Facebook");
+  }
+
+  const response = await fetch(`${API_BASE_URL}/auth/facebook`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: profile.email,
+      name: profile.name,
+      providerId: profile.id,
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(body || "FACEBOOK_LOGIN_FAILED");
+  }
+
+  return response.json() as Promise<NestLoginResponse>;
 }
 
 type ExtendedToken = JWT & {
@@ -163,6 +193,13 @@ export const authOptions: NextAuthOptions = {
 			clientId: process.env.GOOGLE_CLIENT_ID ?? "",
 			clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
 		}),
+    FacebookProvider({
+      clientId: process.env.FACEBOOK_CLIENT_ID ?? "",
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET ?? "",
+      authorization: {
+        params: { scope: "public_profile,email" },
+      },
+    }),
 	],
 	callbacks: {
 		async jwt({ token, user, account, profile, trigger, session }: { token: ExtendedToken; user?: NextAuthUser; account?: any; profile?: any; trigger?: "signIn" | "signUp" | "update"; session?: any }) {
@@ -213,6 +250,30 @@ export const authOptions: NextAuthOptions = {
 			}
 		}
 
+    if (account?.provider === "facebook" && profile) {
+      try {
+        const data = await loginWithFacebookProfile(profile as FacebookProfile);
+        const { user: nestUser, tokens } = data;
+
+        token.accessToken = tokens.accessToken;
+        token.refreshToken = tokens.refreshToken;
+        token.accessTokenExpires = Date.now() + tokens.expiresIn * 1000;
+        token.role = nestUser.role;
+        token.userId = nestUser.user_id;
+        token.mustSetPassword = nestUser.must_set_password;
+        token.imageUrl = nestUser.image_url ?? null;
+        token.address = nestUser.address ?? null;
+        token.province = nestUser.province ?? null;
+        token.region = nestUser.region ?? null;
+        token.accountStatus = nestUser.account_status;
+        token.error = undefined;
+        return token;
+      } catch (error) {
+        console.error("Facebook login error:", error);
+        throw new Error("Không thể kết nối đến server. Vui lòng thử lại sau.");
+      }
+    }
+
 			if (user) {
 				token.accessToken = (user as any).accessToken;
 				token.refreshToken = (user as any).refreshToken;
@@ -252,7 +313,10 @@ export const authOptions: NextAuthOptions = {
 			};
 		},
 	},
-	pages: {},
+	pages: {
+    signIn: "/login",
+    error: "/login",
+  },
 };
 
 const handler = NextAuth(authOptions);
